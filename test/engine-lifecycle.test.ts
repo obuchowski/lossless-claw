@@ -17,6 +17,7 @@ import {
   createTestDeps,
   createEngine,
   createEngineAtDatabasePath,
+  createEngineWithDepsOverrides,
   createSessionFilePath,
   writeLeafTranscriptMessages,
   createEngineWithConfig,
@@ -37,19 +38,59 @@ describe("LcmContextEngine metadata", () => {
     expect(engine.info.ownsCompaction).toBe(true);
   });
 
-  it("requires the full native host lifecycle for agent runs", () => {
+  it("requires only the recording/recall lifecycle for agent runs", () => {
     const engine = createEngine();
     expect(engine.info.hostRequirements?.["agent-run"]).toEqual({
-      requiredCapabilities: [
-        "bootstrap",
-        "assemble-before-prompt",
-        "after-turn",
-        "maintain",
-        "compact",
-        "runtime-llm-complete",
-      ],
-      unsupportedMessage: expect.stringContaining("native Codex or Pi embedded runtime"),
+      requiredCapabilities: ["bootstrap", "after-turn", "maintain"],
+      unsupportedMessage: expect.stringContaining("observer mode"),
     });
+  });
+
+  it("keeps prompt-assembly capabilities out of the agent-run requirements", () => {
+    // OpenClaw invokes assemble()/compact() based on host seams + implemented
+    // engine methods, not on this declaration; requiring them here would only
+    // hard-fail turns on generic CLI backends (observer-mode hosts).
+    const engine = createEngine();
+    const required = engine.info.hostRequirements?.["agent-run"]?.requiredCapabilities ?? [];
+    for (const capability of ["assemble-before-prompt", "compact", "runtime-llm-complete"]) {
+      expect(required).not.toContain(capability);
+    }
+  });
+
+  it("logs the observer-mode notice once per CLI execution host at bootstrap", async () => {
+    const info = vi.fn();
+    const engine = createEngineWithDepsOverrides({
+      log: { info, warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+    });
+    const sessionFile = createSessionFilePath("observer");
+    writeLeafTranscriptMessages(sessionFile, [
+      makeMessage({ role: "user", content: "observer hello" }),
+      makeMessage({ role: "assistant", content: "observer reply" }),
+    ]);
+    const bootstrapParams = {
+      sessionId: "observer-session",
+      sessionKey: "agent:main:main",
+      sessionFile,
+    };
+
+    await engine.bootstrap({
+      ...bootstrapParams,
+      runtimeSettings: { executionHost: { id: "cli:claude-cli", label: 'CLI backend "claude-cli"' } },
+    });
+    await engine.bootstrap({
+      ...bootstrapParams,
+      runtimeSettings: { executionHost: { id: "cli:claude-cli", label: 'CLI backend "claude-cli"' } },
+    });
+    await engine.bootstrap({
+      ...bootstrapParams,
+      runtimeSettings: { executionHost: { id: "openclaw-embedded", label: "OpenClaw embedded runner" } },
+    });
+
+    const observerNotices = info.mock.calls.filter(
+      (call) => typeof call[0] === "string" && call[0].includes("observer mode"),
+    );
+    expect(observerNotices).toHaveLength(1);
+    expect(observerNotices[0][0]).toContain('cli:claude-cli');
   });
 
   it("requires host thread bootstrap projection for subagent forks", () => {

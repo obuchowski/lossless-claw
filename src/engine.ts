@@ -81,13 +81,21 @@ import { estimateSessionTokenCountForAfterTurn, extractRuntimePromptTokenCount }
 import { asRecord, formatDurationMs, resolvePositiveInteger } from "./value-utils.js";
 
 type AgentMessage = Parameters<ContextEngine["ingest"]>[0]["message"];
+// Only the recording/recall lifecycle is REQUIRED from a host. OpenClaw wires
+// hooks by what the host physically supports plus which methods the engine
+// implements — declared requirements are consumed solely by preflight asserts
+// (and doctor), so listing a capability here hard-fails every turn on hosts
+// that lack it (e.g. generic CLI backends, upstream #928/#849) without
+// enabling anything extra on hosts that have it. assemble-before-prompt,
+// compact, runtime-llm-complete, and thread-bootstrap-projection stay
+// opportunistic: capable runtimes (Pi embedded, Codex app-server) invoke those
+// hooks regardless of this list, while limited hosts run LCM in observer mode
+// (record + recall + /new bootstrap; prompt assembly stays backend-native —
+// see the bootstrap-time observer-mode notice).
 const LOSSLESS_AGENT_RUN_REQUIRED_HOST_CAPABILITIES: ContextEngineHostCapability[] = [
   "bootstrap",
-  "assemble-before-prompt",
   "after-turn",
   "maintain",
-  "compact",
-  "runtime-llm-complete",
 ];
 const LOSSLESS_SUBAGENT_SPAWN_REQUIRED_HOST_CAPABILITIES: ContextEngineHostCapability[] = [
   "thread-bootstrap-projection",
@@ -262,6 +270,8 @@ export class LcmContextEngine implements ContextEngine {
    * readLeafPathMessages() call can be skipped entirely.
    */
   private lastFullReadFileState = new Map<number, { size: number; mtimeMs: number }>();
+  /** Execution-host ids already covered by the observer-mode bootstrap notice. */
+  private observerModeHostsLogged = new Set<string>();
 
   // ── Circuit breaker + summary spend guard ───────────────────────────────
   private readonly compactionGuards: CompactionGuards;
@@ -344,8 +354,8 @@ export class LcmContextEngine implements ContextEngine {
         "agent-run": {
           requiredCapabilities: LOSSLESS_AGENT_RUN_REQUIRED_HOST_CAPABILITIES,
           unsupportedMessage: [
-            "lossless-claw requires a native OpenClaw runtime with the full context-engine agent-run lifecycle.",
-            "Use the native Codex or Pi embedded runtime, or switch plugins.slots.contextEngine to legacy for CLI harness runs.",
+            "lossless-claw needs a host that can at least bootstrap sessions and deliver after-turn/maintain lifecycle hooks.",
+            "On hosts without prompt-assembly seams (generic CLI backends) LCM runs in observer mode: it records history, serves recall tools, and seeds /new, while prompt assembly stays backend-native.",
           ].join(" "),
         },
         "subagent-spawn": {
@@ -526,6 +536,26 @@ export class LcmContextEngine implements ContextEngine {
     }
 
     return matchesSessionPattern(candidate, this.ignoreSessionPatterns);
+  }
+
+  /**
+   * Log once per execution host when LCM runs on a host without prompt-assembly
+   * seams (generic CLI backends advertise ids like "cli:claude-cli"). Those
+   * hosts never invoke assemble()/compact() for live turns, so LCM operates in
+   * observer mode: record history, serve recall tools, seed /new bootstraps.
+   * The notice replaces the old hard-fail so the degradation is never silent.
+   */
+  private maybeLogObserverModeHost(runtimeSettings?: Record<string, unknown>): void {
+    const executionHost = asRecord(asRecord(runtimeSettings)?.executionHost);
+    const hostId = typeof executionHost?.id === "string" ? executionHost.id : undefined;
+    if (!hostId || !hostId.startsWith("cli:") || this.observerModeHostsLogged.has(hostId)) {
+      return;
+    }
+    this.observerModeHostsLogged.add(hostId);
+    this.deps.log.info(
+      `[lcm] host "${hostId}" has no prompt-assembly seam: running in observer mode `
+        + "(recording history, recall tools, /new bootstrap); live prompt assembly stays backend-native",
+    );
   }
 
   /** Check whether a session key should skip all LCM writes while remaining readable. */
@@ -1760,7 +1790,9 @@ export class LcmContextEngine implements ContextEngine {
     sessionId: string;
     sessionFile: string;
     sessionKey?: string;
+    runtimeSettings?: Record<string, unknown>;
   }): Promise<BootstrapResult> {
+    this.maybeLogObserverModeHost(params.runtimeSettings);
     if (this.shouldIgnoreSession({ sessionId: params.sessionId, sessionKey: params.sessionKey })) {
       return {
         bootstrapped: false,
