@@ -2458,6 +2458,20 @@ export class LcmContextEngine implements ContextEngine {
             ) {
               return Math.floor(tokenBudget);
             }
+            // Background/bootstrap maintenance passes carry no live budget.
+            // Prefer the budget persisted with the debt row over the 128k
+            // constant: consumeDeferredCompactionDebt clamps with
+            // Math.min(params.tokenBudget, recorded), so a fabricated 128k
+            // here discards the recorded real window (e.g. 272k) and makes
+            // threshold targets permanently unreachable, pinning the debt.
+            const recordedTokenBudget = maintenance?.tokenBudget;
+            if (
+              typeof recordedTokenBudget === "number"
+              && Number.isFinite(recordedTokenBudget)
+              && recordedTokenBudget > 0
+            ) {
+              return Math.floor(recordedTokenBudget);
+            }
             return 128_000;
           })();
           const cappedTokenBudget = this.applyAssemblyBudgetCap(runtimeTokenBudget);
