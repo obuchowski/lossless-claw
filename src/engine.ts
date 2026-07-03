@@ -825,9 +825,15 @@ export class LcmContextEngine implements ContextEngine {
         maintenance.tokenBudget && maintenance.tokenBudget > 0
           ? maintenance.tokenBudget
           : null;
+      // The recorded budget was persisted by a live turn that knew the real
+      // model window; params.tokenBudget may be a fabricated default (e.g.
+      // afterTurn's 128k DEFAULT_AFTER_TURN_TOKEN_BUDGET on observer lanes,
+      // reaching here via the idle drain). Math.min let the fabricated value
+      // clobber the real window and pinned threshold debts on unreachable
+      // targets, so prefer the larger of the two.
       const resolvedTokenBudget = this.applyAssemblyBudgetCap(
         recordedTokenBudget != null
-          ? Math.min(params.tokenBudget, recordedTokenBudget)
+          ? Math.max(params.tokenBudget, recordedTokenBudget)
           : params.tokenBudget,
       );
       const resolvedCurrentTokenCount = this.normalizeObservedTokenCount(
