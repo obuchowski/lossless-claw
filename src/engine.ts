@@ -494,6 +494,7 @@ export class LcmContextEngine implements ContextEngine {
       summaryStore: this.summaryStore,
       compaction: this.compaction,
       compactionGuards: this.compactionGuards,
+      compactionMaintenanceStore: this.compactionMaintenanceStore,
       compactionTelemetryStore: this.compactionTelemetryStore,
       ensureMigrated: () => this.ensureMigrated(),
       shouldIgnoreSession: (params) => this.shouldIgnoreSession(params),
@@ -1133,12 +1134,30 @@ export class LcmContextEngine implements ContextEngine {
     // The resolved threshold is passed unconditionally: when no override rule
     // matches, the resolved value equals the global config.contextThreshold,
     // so the call is behavior-identical to omitting it.
-    const resolvedContextThreshold =
+    const resolvedContextThresholdBase =
       params.contextThresholdOverride
       ?? this.contextThresholdResolver.resolve({
         sessionKey: params.sessionKey,
         runtime: readRuntimeModelContext(asRecord(params.runtimeContext), asRecord(params.legacyParams)),
       });
+    // dogfood: compactionFloor splits the single-knob collision.
+    // contextThreshold stays the automatic afterTurn/deferred trigger, while
+    // manual compaction requests (/compact, sessions.compact RPC — e.g. the
+    // idle-compact plugin; always force + compactionTarget "threshold") get
+    // their own floor/target ratio. Without this, a high auto threshold makes
+    // every manual compact below it a "already under target" no-op.
+    const compactionFloor = this.config.compactionFloor;
+    const manualStyleCompaction =
+      manualCompactionRequested || (force && params.compactionTarget === "threshold");
+    const resolvedContextThreshold =
+      manualStyleCompaction && compactionFloor !== undefined
+        ? {
+            ...resolvedContextThresholdBase,
+            contextThreshold: compactionFloor,
+            source: "global" as const,
+            reason: `compactionFloor=${compactionFloor} (manual/forced compaction)`,
+          }
+        : resolvedContextThresholdBase;
     const decision = await this.compaction.evaluate(conversationId, tokenBudget, observedTokens, {
       contextThreshold: resolvedContextThreshold.contextThreshold,
       ...(resolvedContextThreshold.freshTailCount !== undefined
@@ -3150,12 +3169,7 @@ export class LcmContextEngine implements ContextEngine {
       runtimeContext: params.runtimeContext,
       legacyParams,
     });
-    const tokenBudget = this.applyAssemblyBudgetCap(resolvedTokenBudget ?? DEFAULT_AFTER_TURN_TOKEN_BUDGET);
-    if (resolvedTokenBudget === undefined) {
-      this.deps.log.warn(
-        `[lcm] afterTurn: tokenBudget not provided; using default ${DEFAULT_AFTER_TURN_TOKEN_BUDGET}`,
-      );
-    }
+    let tokenBudget = this.applyAssemblyBudgetCap(resolvedTokenBudget ?? DEFAULT_AFTER_TURN_TOKEN_BUDGET);
 
     const estimatedContextTokens = estimateSessionTokenCountForAfterTurn(params.messages);
     const runtimePromptTokens = extractRuntimePromptTokenCount(asRecord(params.runtimeContext));
@@ -3178,6 +3192,36 @@ export class LcmContextEngine implements ContextEngine {
       sessionId: params.sessionId,
       sessionKey: params.sessionKey,
     });
+    if (conversation && resolvedTokenBudget === undefined) {
+      // afterTurn records tokenBudget into deferred-debt rows, so a fabricated
+      // 128k here poisons every later drain (they prefer the recorded budget).
+      // When the runtime supplied no budget, fall back to the budget persisted
+      // with the maintenance row (the real model window from a prior turn)
+      // before resorting to the 128k constant.
+      const recordedTokenBudget = (
+        await this.compactionMaintenanceStore.getConversationCompactionMaintenance(
+          conversation.conversationId,
+        )
+      )?.tokenBudget;
+      if (
+        typeof recordedTokenBudget === "number"
+        && Number.isFinite(recordedTokenBudget)
+        && recordedTokenBudget > 0
+      ) {
+        tokenBudget = this.applyAssemblyBudgetCap(Math.floor(recordedTokenBudget));
+        this.deps.log.debug(
+          `[lcm] afterTurn: tokenBudget not provided; using recorded maintenance budget ${tokenBudget}`,
+        );
+      } else {
+        this.deps.log.warn(
+          `[lcm] afterTurn: tokenBudget not provided; using default ${DEFAULT_AFTER_TURN_TOKEN_BUDGET}`,
+        );
+      }
+    } else if (resolvedTokenBudget === undefined) {
+      this.deps.log.warn(
+        `[lcm] afterTurn: tokenBudget not provided; using default ${DEFAULT_AFTER_TURN_TOKEN_BUDGET}`,
+      );
+    }
     if (!conversation) {
       this.deps.log.debug(
         `[lcm] afterTurn: conversation lookup missed ${sessionLabel} ingestBatch=${ingestBatch.length} duration=${formatDurationMs(Date.now() - startedAt)}`,
@@ -3546,12 +3590,25 @@ export class LcmContextEngine implements ContextEngine {
         }
       }
 
+      const maintenance = await this.compactionMaintenanceStore.getConversationCompactionMaintenance(
+        conversation.conversationId,
+      );
+      // When the runtime supplied no budget, prefer the budget persisted with
+      // the maintenance row (the real model window from a prior turn) over the
+      // 128k constant: clamping the live fallback to a fabricated 128k on a
+      // larger window evicts tail messages the model could actually hold.
+      const recordedMaintenanceBudget =
+        typeof maintenance?.tokenBudget === "number" &&
+        Number.isFinite(maintenance.tokenBudget) &&
+        maintenance.tokenBudget > 0
+          ? Math.floor(maintenance.tokenBudget)
+          : undefined;
       const tokenBudget = this.applyAssemblyBudgetCap(
         typeof params.tokenBudget === "number" &&
         Number.isFinite(params.tokenBudget) &&
         params.tokenBudget > 0
           ? Math.floor(params.tokenBudget)
-          : 128_000,
+          : recordedMaintenanceBudget ?? 128_000,
       );
       // Bounded variant of safeFallback for paths where this engine manages
       // the conversation but cannot produce assembled coverage. Returning the
@@ -3571,9 +3628,6 @@ export class LcmContextEngine implements ContextEngine {
         return { messages: clamp.messages, estimatedTokens: clamp.serializedTokens };
       };
       const liveContextTokens = estimateSessionTokenCountForAfterTurn(liveMessages);
-      const maintenance = await this.compactionMaintenanceStore.getConversationCompactionMaintenance(
-        conversation.conversationId,
-      );
       let deferredAssemblyDegradation:
         | {
             reason:
@@ -3980,7 +4034,10 @@ export class LcmContextEngine implements ContextEngine {
         `[lcm] assemble: failed for session=${params.sessionId}${params.sessionKey?.trim() ? ` sessionKey=${params.sessionKey.trim()}` : ""} error=${describeLogError(err)}`,
       );
       // Clamp even the error fallback: an unbounded live transcript here is
-      // exactly how an over-budget prompt reaches the model.
+      // exactly how an over-budget prompt reaches the model. The 128k default
+      // is a deliberate last resort: the conversation (and thus the recorded
+      // maintenance budget) may be unresolved in this error path, and a
+      // conservative clamp beats another DB read inside a failure handler.
       const fallback = safeFallback();
       const fallbackBudget = this.applyAssemblyBudgetCap(
         typeof params.tokenBudget === "number" &&

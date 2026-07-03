@@ -26,6 +26,7 @@ import type { CompactionGuards } from "./compaction-guards.js";
 import type { LcmConfig } from "./db/config.js";
 import type { ContextEngineInfo } from "./openclaw-bridge.js";
 import type { TranscriptReconcileResult } from "./reconcile-plan.js";
+import type { CompactionMaintenanceStore } from "./store/compaction-maintenance-store.js";
 import type { CompactionTelemetryStore } from "./store/compaction-telemetry-store.js";
 import type { ConversationRecord, ConversationStore } from "./store/conversation-store.js";
 import type { SummaryStore } from "./store/summary-store.js";
@@ -155,6 +156,7 @@ export type RotationHost = {
   readonly summaryStore: SummaryStore;
   readonly compaction: CompactionEngine;
   readonly compactionGuards: CompactionGuards;
+  readonly compactionMaintenanceStore: CompactionMaintenanceStore;
   readonly compactionTelemetryStore: CompactionTelemetryStore;
   ensureMigrated(): void;
   shouldIgnoreSession(params: { sessionId?: string; sessionKey?: string }): boolean;
@@ -1208,7 +1210,22 @@ export class SessionRotationService {
         reason: "Lossless Claw could not summarize raw context before rotate because the summary provider circuit breaker is open.",
       };
     }
-    const tokenBudget = this.host.applyAssemblyBudgetCap(128_000);
+    // Rotation runs outside a live turn, so no runtime budget is available.
+    // Prefer the budget persisted with the maintenance row (the real model
+    // window from a prior turn): a fabricated 128k on a larger window sets
+    // compaction targets the protected tail can make unreachable.
+    const recordedTokenBudget = (
+      await this.host.compactionMaintenanceStore.getConversationCompactionMaintenance(
+        current.conversationId,
+      )
+    )?.tokenBudget;
+    const tokenBudget = this.host.applyAssemblyBudgetCap(
+      typeof recordedTokenBudget === "number"
+      && Number.isFinite(recordedTokenBudget)
+      && recordedTokenBudget > 0
+        ? Math.floor(recordedTokenBudget)
+        : 128_000,
+    );
     let leafPasses = 0;
 
     while (leafPasses <= maxLeafPasses) {
