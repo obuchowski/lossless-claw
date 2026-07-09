@@ -102,15 +102,6 @@ export type LcmConfig = {
   contextThreshold: number;
   /** Optional ordered rules that override contextThreshold for matching runtime contexts. */
   contextThresholdOverrides?: ContextThresholdOverride[];
-  /**
-   * Lower bound for on-demand compaction requests (/compact, sessions.compact
-   * RPC — e.g. idle-compact): below this fraction of the context window the
-   * request is a no-op, above it context shrinks toward this floor. Lets the
-   * automatic afterTurn trigger (contextThreshold) stay high while on-demand
-   * compaction keeps a much lower floor. Falls back to contextThreshold when
-   * unset.
-   */
-  compactionFloor?: number;
   freshTailCount: number;
   /** Optional token cap for the protected fresh tail; newest message is always preserved. */
   freshTailMaxTokens?: number;
@@ -400,16 +391,6 @@ function toRecord(value: unknown): Record<string, unknown> | undefined {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : undefined;
-}
-
-function parseOptionalUnitRatio(value: number | undefined, name: string): number | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-  if (!Number.isFinite(value) || value < 0 || value > 1) {
-    throw new Error(`${name} must be a finite number between 0 and 1`);
-  }
-  return value;
 }
 
 function parseContextThresholdOverrideThreshold(value: unknown, path: string): number {
@@ -720,11 +701,6 @@ export function resolveLcmConfigWithDiagnostics(
         parseFiniteNumber(env.LCM_CONTEXT_THRESHOLD)
           ?? toNumber(pc.contextThreshold) ?? 0.75,
       contextThresholdOverrides: toContextThresholdOverrides(pc.contextThresholdOverrides),
-      compactionFloor: parseOptionalUnitRatio(
-        parseFiniteNumber(env.LCM_COMPACTION_FLOOR)
-          ?? toNumber(pc.compactionFloor),
-        "compactionFloor",
-      ),
       freshTailCount:
         parseFiniteInt(env.LCM_FRESH_TAIL_COUNT)
           ?? toNumber(pc.freshTailCount) ?? 64,

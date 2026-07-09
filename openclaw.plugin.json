@@ -35,10 +35,6 @@
       "label": "Context Threshold",
       "help": "Fraction of context window that triggers compaction (0.0–1.0)"
     },
-    "compactionFloor": {
-      "label": "Compaction Floor",
-      "help": "Lower bound for on-demand compaction (/compact, sessions.compact RPC, e.g. idle-compact): requests below this fraction of the context window are no-ops, above it context shrinks toward it. Falls back to contextThreshold when unset."
-    },
     "contextThresholdOverrides": {
       "label": "Context Threshold Overrides",
       "help": "Optional ordered rules that override contextThreshold, freshTailCount, and leafChunkTokens by model, model context-window range, or session glob pattern"
@@ -336,11 +332,6 @@
         "type": "boolean"
       },
       "contextThreshold": {
-        "type": "number",
-        "minimum": 0,
-        "maximum": 1
-      },
-      "compactionFloor": {
         "type": "number",
         "minimum": 0,
         "maximum": 1
