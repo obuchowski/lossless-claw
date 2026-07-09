@@ -24,10 +24,10 @@ import (
 
 const (
 	corruptedSummaryMarker = "[LCM fallback summary; truncated for context management]"
-	defaultLLMProvider     = "anthropic"
+	defaultLLMProvider     = "openai-codex"
 	anthropicModel         = "claude-sonnet-4-20250514"
 	anthropicVersion       = "2023-06-01"
-	openAIResponsesModel   = "gpt-5.3-codex"
+	openAIResponsesModel   = "gpt-5.4"
 	condensedTargetTokens  = 2000
 	defaultHTTPTimeout     = 180 * time.Second
 
@@ -1429,7 +1429,7 @@ func resolveSummaryProviderModel(providerHint, modelHint string) (string, string
 	model := strings.TrimSpace(modelHint)
 
 	if model == "" {
-		if provider == "openai" || provider == "openai-codex" || provider == "github-copilot" {
+		if provider == "" || provider == "openai" || provider == "openai-codex" || provider == "github-copilot" {
 			model = openAIResponsesModel
 		} else {
 			model = anthropicModel
@@ -1467,7 +1467,7 @@ func inferProviderFromModel(model string) string {
 		strings.HasPrefix(lower, "o3"),
 		strings.HasPrefix(lower, "o4"),
 		strings.Contains(lower, "codex"):
-		return "openai"
+		return "openai-codex"
 	default:
 		return defaultLLMProvider
 	}
@@ -1482,21 +1482,20 @@ func resolveProviderAPIKey(paths appDataPaths, provider string) (string, error) 
 	if normalizedProvider == "" {
 		normalizedProvider = defaultLLMProvider
 	}
+
+	// Codex is the default OpenAI route for the TUI. Prefer the Codex CLI OAuth
+	// session over raw OPENAI_API_KEY so ChatGPT Plus/Pro users do not
+	// accidentally fall back to direct API billing.
+	if normalizedProvider == "openai-codex" && hasCodexOAuth() {
+		return "", nil
+	}
+
 	envCandidates := providerAPIEnvCandidates(normalizedProvider)
 
 	for _, keyName := range envCandidates {
 		if value := strings.TrimSpace(os.Getenv(keyName)); value != "" {
 			return value, nil
 		}
-	}
-
-	// Codex OAuth fallback: when ~/.codex/auth.json exists the codex CLI
-	// can handle auth itself. Return an empty apiKey with nil error so the
-	// caller routes to summarizeViaCodexCLI. Placed before the OpenClaw
-	// auth-profile and credential-file lookups because those don't apply to
-	// ChatGPT Plus/Pro plans, which have no API-key equivalent.
-	if normalizedProvider == "openai-codex" && hasCodexOAuth() {
-		return "", nil
 	}
 
 	// Check CLAUDE_CODE_OAUTH_TOKEN env var (setup-token / OAuth support).

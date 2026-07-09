@@ -19,8 +19,8 @@ const (
 	doctorLCMFallbackMarker  = "[LCM fallback summary; truncated for context management]"
 	doctorNewMarkerWindow    = 40
 	doctorFallbackWindow     = 80
-	doctorDefaultProvider    = "anthropic"
-	doctorDefaultModel       = "claude-haiku-4-5"
+	doctorDefaultProvider    = defaultLLMProvider
+	doctorDefaultModel       = openAIResponsesModel
 	doctorDefaultApplyPrompt = ""
 )
 
@@ -263,8 +263,8 @@ Flags:
   --apply             write repaired summaries to the DB
   --summary           scan only and show counts
   --all               scan all conversations (discovery mode only)
-  --provider <id>     API provider (default: anthropic)
-  --model <model>     API model (default: claude-haiku-4-5)
+  --provider <id>     API provider (default: openai-codex)
+  --model <model>     API model (default: gpt-5.4)
   --base-url <url>    custom API base URL (overrides config and env)
   --show-diff         show unified diff for each fix
   --timestamps        inject timestamps into rewrite source text

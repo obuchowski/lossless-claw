@@ -270,7 +270,7 @@ Scans for genuinely truncated summaries and can rewrite them in place. This is n
 lcm-tui doctor 44 --show-diff
 
 # Apply repairs through Codex CLI OAuth after `codex login`
-lcm-tui doctor 44 --apply --provider openai-codex --model gpt-5.3-codex
+lcm-tui doctor 44 --apply
 
 # Scan only across every conversation
 lcm-tui doctor --all
@@ -281,13 +281,13 @@ lcm-tui doctor --all
 | `--apply` | Write repaired summaries to the database |
 | `--summary` | Scan only and show counts |
 | `--all` | Scan all conversations (discovery mode only) |
-| `--provider <id>` | API provider (default: anthropic) |
-| `--model <model>` | API model (default: `claude-haiku-4-5`) |
+| `--provider <id>` | API provider (default: `openai-codex`) |
+| `--model <model>` | API model (default: `gpt-5.4`) |
 | `--base-url <url>` | Custom API base URL (overrides config and env) |
 | `--show-diff` | Show unified diff for each fix |
 | `--timestamps` | Inject timestamps into rewrite source text |
 
-Use `--provider openai-codex` when you want ChatGPT Plus/Pro OAuth from the Codex CLI. Keep `--provider openai` for direct OpenAI-compatible HTTP calls with a raw `OPENAI_API_KEY`, including custom `--base-url` proxies.
+By default, summary-producing TUI operations use `openai-codex` and delegate through the Codex CLI OAuth session after `codex login`. Keep `--provider openai` for direct OpenAI-compatible HTTP calls with a raw `OPENAI_API_KEY`, including custom `--base-url` proxies.
 
 ### `lcm-tui repair`
 
@@ -307,10 +307,10 @@ lcm-tui repair 44 --apply
 lcm-tui repair 44 --summary-id sum_abc123 --apply
 
 # Repair through Codex CLI OAuth after `codex login`
-lcm-tui repair 44 --apply --provider openai-codex --model gpt-5.3-codex
+lcm-tui repair 44 --apply
 
 # Repair through a custom OpenAI-compatible proxy with a raw API key
-lcm-tui repair 44 --apply --provider openai --model gpt-5.3-codex --base-url https://proxy.example.com/openai
+lcm-tui repair 44 --apply --provider openai --model gpt-5.4 --base-url https://proxy.example.com/openai
 ```
 
 The repair process:
@@ -346,10 +346,10 @@ lcm-tui rewrite 44 --depth 0 --apply
 lcm-tui rewrite 44 --all --apply --diff
 
 # Rewrite with Codex CLI OAuth after `codex login`
-lcm-tui rewrite 44 --summary sum_abc123 --provider openai-codex --model gpt-5.3-codex --apply
+lcm-tui rewrite 44 --summary sum_abc123 --apply
 
 # Rewrite through a custom OpenAI-compatible proxy with a raw API key
-lcm-tui rewrite 44 --summary sum_abc123 --provider openai --model gpt-5.3-codex --base-url https://proxy.example.com/openai --apply
+lcm-tui rewrite 44 --summary sum_abc123 --provider openai --model gpt-5.4 --base-url https://proxy.example.com/openai --apply
 
 # Use custom prompt templates
 lcm-tui rewrite 44 --all --apply --prompt-dir ~/.config/lcm-tui/prompts
@@ -442,10 +442,10 @@ lcm-tui backfill my-agent session_abc123 --apply --recompact --single-root
 lcm-tui backfill my-agent session_abc123 --apply --transplant-to 653
 
 # Backfill using Codex CLI OAuth after `codex login`
-lcm-tui backfill my-agent session_abc123 --apply --provider openai-codex --model gpt-5.3-codex
+lcm-tui backfill my-agent session_abc123 --apply
 
 # Backfill through a custom OpenAI-compatible proxy with a raw API key
-lcm-tui backfill my-agent session_abc123 --apply --provider openai --model gpt-5.3-codex --base-url https://proxy.example.com/openai
+lcm-tui backfill my-agent session_abc123 --apply --provider openai --model gpt-5.4 --base-url https://proxy.example.com/openai
 ```
 
 All write paths are transactional:

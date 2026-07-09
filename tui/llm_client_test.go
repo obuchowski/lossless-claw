@@ -30,17 +30,22 @@ func jsonResponse(statusCode int, body string) *http.Response {
 }
 
 func TestResolveSummaryProviderModel(t *testing.T) {
-	provider, model := resolveSummaryProviderModel("", "gpt-5.3-codex")
-	if provider != "openai" {
-		t.Fatalf("expected provider openai, got %q", provider)
+	provider, model := resolveSummaryProviderModel("", "gpt-5.4")
+	if provider != "openai-codex" {
+		t.Fatalf("expected provider openai-codex, got %q", provider)
 	}
-	if model != "gpt-5.3-codex" {
-		t.Fatalf("expected model gpt-5.3-codex, got %q", model)
+	if model != "gpt-5.4" {
+		t.Fatalf("expected model gpt-5.4, got %q", model)
 	}
 
-	provider, model = resolveSummaryProviderModel("", "openai/gpt-5.3-codex")
-	if provider != "openai" || model != "gpt-5.3-codex" {
-		t.Fatalf("expected openai/gpt-5.3-codex, got %q/%q", provider, model)
+	provider, model = resolveSummaryProviderModel("", "openai/gpt-5.4")
+	if provider != "openai" || model != "gpt-5.4" {
+		t.Fatalf("expected openai/gpt-5.4, got %q/%q", provider, model)
+	}
+
+	provider, model = resolveSummaryProviderModel("", "")
+	if provider != "openai-codex" || model != "gpt-5.4" {
+		t.Fatalf("expected default openai-codex/gpt-5.4, got %q/%q", provider, model)
 	}
 }
 
@@ -83,7 +88,7 @@ func TestSummarizeOpenAISucceedsWithOutputText(t *testing.T) {
 	client := &anthropicClient{
 		provider: "openai",
 		apiKey:   "test-openai-key",
-		model:    "gpt-5.3-codex",
+		model:    "gpt-5.4",
 		baseURL:  "https://api.openai.com",
 		http: &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
 			if req.URL.String() != "https://api.openai.com/v1/responses" {
@@ -111,7 +116,7 @@ func TestSummarizeOpenAIEmptyNormalizationIncludesDiagnostics(t *testing.T) {
 	client := &anthropicClient{
 		provider: "openai",
 		apiKey:   "test-openai-key",
-		model:    "gpt-5.3-codex",
+		model:    "gpt-5.4",
 		http: &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
 			return jsonResponse(200, `{"output":[{"type":"reasoning"}]}`), nil
 		})},
@@ -122,7 +127,7 @@ func TestSummarizeOpenAIEmptyNormalizationIncludesDiagnostics(t *testing.T) {
 		t.Fatal("expected summarize error for empty normalized output")
 	}
 	msg := err.Error()
-	if !strings.Contains(msg, "provider=openai") || !strings.Contains(msg, "model=gpt-5.3-codex") {
+	if !strings.Contains(msg, "provider=openai") || !strings.Contains(msg, "model=gpt-5.4") {
 		t.Fatalf("expected provider/model diagnostics, got %q", msg)
 	}
 	if !strings.Contains(msg, "block_types=reasoning") {
@@ -282,7 +287,7 @@ func TestSummarizeOpenAICustomBaseURL(t *testing.T) {
 	client := &anthropicClient{
 		provider: "openai",
 		apiKey:   "test-openai-key",
-		model:    "gpt-5.3-codex",
+		model:    "gpt-5.4",
 		baseURL:  customBase,
 		http: &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
 			expectedURL := customBase + "/v1/responses"
@@ -309,7 +314,7 @@ func TestSummarizeOpenAICustomBaseURLWithVersionPrefix(t *testing.T) {
 	client := &anthropicClient{
 		provider: "openai",
 		apiKey:   "test-openai-key",
-		model:    "gpt-5.3-codex",
+		model:    "gpt-5.4",
 		baseURL:  customBase,
 		http: &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
 			expectedURL := customBase + "/responses"
