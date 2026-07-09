@@ -842,11 +842,11 @@ function normalizePositiveInteger(value: number | null | undefined): number | nu
     : null;
 }
 
-function resolveLifecycleCompactionTokenBudget(config: LcmConfig): number {
-  return normalizePositiveInteger(config.maxAssemblyTokenBudget) ?? 128_000;
-}
-
-function resolveStatusAssemblyTokenBudget(
+// Explicit config cap wins; otherwise prefer the budget persisted with the
+// maintenance row (the real model window from a prior turn) over the 128k
+// last-resort constant: a fabricated 128k on a larger window sets threshold
+// targets the protected tail can make unreachable.
+function resolveAssemblyTokenBudget(
   config: LcmConfig,
   maintenance: ConversationCompactionMaintenanceRecord | null,
 ): number {
@@ -937,7 +937,7 @@ function buildDoctorApplySafetyPreflight(params: {
   repairMetrics: DoctorApplyRepairMetrics;
   maintenance: ConversationCompactionMaintenanceRecord | null;
 }): { blocked: boolean; reasons: string[]; tokenBudget: number; tokenThreshold: number } {
-  const tokenBudget = resolveLifecycleCompactionTokenBudget(params.config);
+  const tokenBudget = resolveAssemblyTokenBudget(params.config, params.maintenance);
   const tokenThreshold = Math.floor(tokenBudget * DOCTOR_APPLY_BUDGET_PRESSURE_RATIO);
   const reasons: string[] = [];
 
@@ -973,7 +973,7 @@ function buildLcmHealthSummary(params: {
   stats: LcmConversationStatusStats;
   maintenance: ConversationCompactionMaintenanceRecord | null;
 }): { state: "healthy" | "warning" | "degraded"; reasons: string[] } {
-  const tokenBudget = resolveStatusAssemblyTokenBudget(
+  const tokenBudget = resolveAssemblyTokenBudget(
     params.config,
     params.maintenance,
   );
@@ -1076,6 +1076,7 @@ async function runFocusLifecycleCompaction(params: {
   deps?: LcmDependencies;
   getLcm?: () => Promise<RuntimeCommandEngine>;
   config: LcmConfig;
+  db: DatabaseSync;
   current: Extract<CurrentConversationResolution, { kind: "resolved" }>;
   sessionKey?: string;
 }): Promise<
@@ -1122,7 +1123,11 @@ async function runFocusLifecycleCompaction(params: {
     sessionFile = "";
   }
 
-  const tokenBudget = resolveLifecycleCompactionTokenBudget(params.config);
+  const maintenance = await getConversationCompactionMaintenanceByConversationId(
+    params.db,
+    params.current.stats.conversationId,
+  );
+  const tokenBudget = resolveAssemblyTokenBudget(params.config, maintenance);
   try {
     const result = await engine.compact({
       sessionId,
@@ -2098,6 +2103,7 @@ async function buildFocusGenerateText(params: {
     deps: params.deps,
     getLcm: params.getLcm,
     config: params.config,
+    db: params.db,
     current,
     sessionKey: requesterSessionKey,
   });
@@ -2334,6 +2340,7 @@ async function buildRefocusText(params: {
     deps: params.deps,
     getLcm: params.getLcm,
     config: params.config,
+    db: params.db,
     current,
     sessionKey: requesterSessionKey,
   });
@@ -2542,6 +2549,7 @@ async function buildUnfocusText(params: {
     deps: params.deps,
     getLcm: params.getLcm,
     config: params.config,
+    db: params.db,
     current,
     sessionKey:
       normalizeIdentity(params.ctx.sessionKey) ??
