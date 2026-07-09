@@ -89,7 +89,7 @@ describe("resolveLcmConfig", () => {
           leafChunkTokens: 12000,
         },
         {
-          match: { model: "openai/gpt-5.5", sessionPattern: "agent:*:telegram:**" },
+          match: { model: "openai/gpt-5.6-sol", sessionPattern: "agent:*:telegram:**" },
           contextThreshold: 0.35,
         },
       ],
@@ -153,7 +153,7 @@ describe("resolveLcmConfig", () => {
         leafChunkTokens: 12000,
       },
       {
-        match: { model: "openai/gpt-5.5", sessionPattern: "agent:*:telegram:**" },
+        match: { model: "openai/gpt-5.6-sol", sessionPattern: "agent:*:telegram:**" },
         contextThreshold: 0.35,
       },
     ]);
@@ -768,7 +768,7 @@ describe("resolveLcmConfig", () => {
     expect(() =>
       resolveLcmConfig({}, {
         contextThresholdOverrides: [
-          { match: { model: "openai/gpt-5.5" }, contextThreshold: 1.5 },
+          { match: { model: "openai/gpt-5.6-sol" }, contextThreshold: 1.5 },
         ],
       })
     ).toThrow(/contextThreshold/);
@@ -806,14 +806,14 @@ describe("resolveLcmConfig", () => {
     expect(() =>
       resolveLcmConfig({}, {
         contextThresholdOverrides: [
-          { match: { model: "openai/gpt-5.5" }, contextThreshold: 0.5, freshTailCount: 0 },
+          { match: { model: "openai/gpt-5.6-sol" }, contextThreshold: 0.5, freshTailCount: 0 },
         ],
       })
     ).toThrow(/freshTailCount/);
     expect(() =>
       resolveLcmConfig({}, {
         contextThresholdOverrides: [
-          { match: { model: "openai/gpt-5.5" }, contextThreshold: 0.5, leafChunkTokens: 0 },
+          { match: { model: "openai/gpt-5.6-sol" }, contextThreshold: 0.5, leafChunkTokens: 0 },
         ],
       })
     ).toThrow(/leafChunkTokens/);

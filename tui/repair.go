@@ -27,7 +27,7 @@ const (
 	defaultLLMProvider     = "openai-codex"
 	anthropicModel         = "claude-sonnet-4-20250514"
 	anthropicVersion       = "2023-06-01"
-	openAIResponsesModel   = "gpt-5.4"
+	openAIResponsesModel   = "gpt-5.6-terra"
 	condensedTargetTokens  = 2000
 	defaultHTTPTimeout     = 180 * time.Second
 

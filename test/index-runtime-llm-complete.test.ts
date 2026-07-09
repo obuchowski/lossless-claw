@@ -123,7 +123,7 @@ describe("createLcmDependencies.complete runtime.llm bridge", () => {
     const runtimeLlmComplete = vi.fn(async () => ({
       text: "summary output",
       provider: "openai-codex",
-      model: "gpt-5.4",
+      model: "gpt-5.6-terra",
       agentId: "research-agent",
       usage: { totalTokens: 42 },
       audit: { caller: { kind: "plugin", id: "lossless-claw" } },
@@ -134,11 +134,11 @@ describe("createLcmDependencies.complete runtime.llm bridge", () => {
     try {
       const result = await engine.deps.complete({
         provider: "openai-codex",
-        model: "gpt-5.4",
+        model: "gpt-5.6-terra",
         runtimeModelOverride: {
           configField: "summaryModel",
           configPath: "plugins.entries.lossless-claw.config.summaryModel",
-          modelRef: "openai-codex/gpt-5.4",
+          modelRef: "openai-codex/gpt-5.6-terra",
         },
         agentId: "research-agent",
         system: "System summary policy.",
@@ -152,7 +152,7 @@ describe("createLcmDependencies.complete runtime.llm bridge", () => {
       expect(runtimeLlmComplete).toHaveBeenCalledTimes(1);
       expect(runtimeLlmComplete).toHaveBeenCalledWith({
         messages: [{ role: "user", content: "Summarize this." }],
-        model: "openai-codex/gpt-5.4",
+        model: "openai-codex/gpt-5.6-terra",
         maxTokens: 256,
         temperature: 0.2,
         systemPrompt: "System summary policy.",
@@ -162,7 +162,7 @@ describe("createLcmDependencies.complete runtime.llm bridge", () => {
       expect(result).toMatchObject({
         content: [{ type: "text", text: "summary output" }],
         provider: "openai-codex",
-        model: "gpt-5.4",
+        model: "gpt-5.6-terra",
         agentId: "research-agent",
         request_api: "runtime.llm",
       });
@@ -270,7 +270,7 @@ describe("createLcmDependencies.complete runtime.llm bridge", () => {
   it("returns an actionable Lossless error when runtime LLM denies a model override", async () => {
     const runtimeLlmComplete = vi.fn(async () => {
       throw new Error(
-        'Plugin LLM completion model override "openai-codex/gpt-5.5" is not allowlisted for plugin "lossless-claw".',
+        'Plugin LLM completion model override "openai-codex/gpt-5.6-sol" is not allowlisted for plugin "lossless-claw".',
       );
     });
     const { api, getFactory, dbPath } = buildApi({ runtimeLlmComplete });
@@ -279,11 +279,11 @@ describe("createLcmDependencies.complete runtime.llm bridge", () => {
     try {
       const result = await engine.deps.complete({
         provider: "openai-codex",
-        model: "gpt-5.5",
+        model: "gpt-5.6-sol",
         runtimeModelOverride: {
           configField: "summaryModel",
           configPath: "plugins.entries.lossless-claw.config.summaryModel",
-          modelRef: "openai-codex/gpt-5.5",
+          modelRef: "openai-codex/gpt-5.6-sol",
         },
         messages: [{ role: "user", content: "Summarize this." }],
         maxTokens: 256,
@@ -296,12 +296,12 @@ describe("createLcmDependencies.complete runtime.llm bridge", () => {
           code: "runtime_llm_model_override_denied",
           configField: "summaryModel",
           configPath: "plugins.entries.lossless-claw.config.summaryModel",
-          modelRef: "openai-codex/gpt-5.5",
+          modelRef: "openai-codex/gpt-5.6-sol",
           message: expect.stringContaining("openclaw doctor --fix"),
         },
       });
       expect(String(result.error?.message)).toContain('"allowedModels": [');
-      expect(String(result.error?.message)).toContain('"openai-codex/gpt-5.5"');
+      expect(String(result.error?.message)).toContain('"openai-codex/gpt-5.6-sol"');
     } finally {
       closeLcmConnection(dbPath);
     }
@@ -314,7 +314,7 @@ describe("createLcmDependencies.complete runtime.llm bridge", () => {
     try {
       const result = await engine.deps.complete({
         provider: "openai-codex",
-        model: "gpt-5.4",
+        model: "gpt-5.6-terra",
         messages: [{ role: "user", content: "Summarize this." }],
         maxTokens: 256,
       });

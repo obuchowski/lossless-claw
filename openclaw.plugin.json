@@ -153,7 +153,7 @@
     },
     "summaryModel": {
       "label": "Summary Model",
-      "help": "Runtime LLM model override for LCM summarization (e.g., 'gpt-5.4' with summaryProvider, or 'openai-resp/gpt-5.4'); explicit overrides require plugins.entries.lossless-claw.llm policy"
+      "help": "Runtime LLM model override for LCM summarization (e.g., 'gpt-5.6-terra' with summaryProvider, or 'openai-resp/gpt-5.6-terra'); explicit overrides require plugins.entries.lossless-claw.llm policy"
     },
     "summaryProvider": {
       "label": "Summary Provider",

@@ -2455,13 +2455,13 @@ describe("LcmContextEngine.compact token budget plumbing", () => {
     const engine = createEngineWithDeps(
       {
         largeFileSummaryProvider: "openai-codex",
-        largeFileSummaryModel: "gpt-5.4",
+        largeFileSummaryModel: "gpt-5.6-terra",
       },
       {
         complete: completeSpy,
         resolveModel: vi.fn((modelRef?: string, providerHint?: string) => ({
           provider: providerHint ?? "openai-codex",
-          model: modelRef ?? "gpt-5.4",
+          model: modelRef ?? "gpt-5.6-terra",
         })),
       },
     );
@@ -2480,7 +2480,7 @@ describe("LcmContextEngine.compact token budget plumbing", () => {
         runtimeModelOverride: {
           configField: "largeFileSummaryModel",
           configPath: "plugins.entries.lossless-claw.config.largeFileSummaryModel",
-          modelRef: "openai-codex/gpt-5.4",
+          modelRef: "openai-codex/gpt-5.6-terra",
         },
       }),
     );
@@ -2496,7 +2496,7 @@ describe("LcmContextEngine.compact token budget plumbing", () => {
       const engine = createEngineWithDeps(
         {
           largeFileSummaryProvider: "openai-codex",
-          largeFileSummaryModel: "gpt-5.4",
+          largeFileSummaryModel: "gpt-5.6-terra",
           summaryMaxCallsPerWindow: 1,
           summaryCallWindowMs: 1_000,
           summarySpendBackoffMs: 30 * 60 * 1000,
@@ -2505,7 +2505,7 @@ describe("LcmContextEngine.compact token budget plumbing", () => {
           complete: completeSpy,
           resolveModel: vi.fn((modelRef?: string, providerHint?: string) => ({
             provider: providerHint ?? "openai-codex",
-            model: modelRef ?? "gpt-5.4",
+            model: modelRef ?? "gpt-5.6-terra",
           })),
         },
       );

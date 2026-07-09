@@ -15,7 +15,7 @@ describe("doctor contract runtime LLM compatibility", () => {
             enabled: true,
             config: {
               enabled: true,
-              summaryModel: "openai-codex/gpt-5.5",
+              summaryModel: "openai-codex/gpt-5.6-sol",
               contextThreshold: 0.42,
             },
           },
@@ -27,12 +27,12 @@ describe("doctor contract runtime LLM compatibility", () => {
 
     expect(mutation.config.plugins.entries["lossless-claw"].config).toEqual({
       enabled: true,
-      summaryModel: "openai-codex/gpt-5.5",
+      summaryModel: "openai-codex/gpt-5.6-sol",
       contextThreshold: 0.42,
     });
     expect(mutation.config.plugins.entries["lossless-claw"].llm).toEqual({
       allowModelOverride: true,
-      allowedModels: ["openai-codex/gpt-5.5"],
+      allowedModels: ["openai-codex/gpt-5.6-sol"],
     });
     expect(mutation.config.plugins.entries["lossless-claw"].llm).not.toHaveProperty(
       "allowAgentIdOverride",
@@ -48,7 +48,7 @@ describe("doctor contract runtime LLM compatibility", () => {
         entries: {
           "lossless-claw": {
             config: {
-              summaryModel: "openai-codex/gpt-5.5",
+              summaryModel: "openai-codex/gpt-5.6-sol",
               largeFileSummaryProvider: "anthropic",
               largeFileSummaryModel: "claude-sonnet-4-6",
               fallbackProviders: [{ provider: "openai", model: "gpt-4.1-mini" }],
@@ -66,7 +66,7 @@ describe("doctor contract runtime LLM compatibility", () => {
 
     expect(mutation.config.plugins.entries["lossless-claw"].llm.allowedModels).toEqual([
       "anthropic/claude-opus-4-6",
-      "openai-codex/gpt-5.5",
+      "openai-codex/gpt-5.6-sol",
       "anthropic/claude-sonnet-4-6",
       "openai/gpt-4.1-mini",
     ]);
@@ -81,7 +81,7 @@ describe("doctor contract runtime LLM compatibility", () => {
         entries: {
           "lossless-claw": {
             config: {
-              summaryModel: "openai-codex/gpt-5.5",
+              summaryModel: "openai-codex/gpt-5.6-sol",
             },
           },
         },
@@ -90,7 +90,7 @@ describe("doctor contract runtime LLM compatibility", () => {
 
     const summaryRule = legacyConfigRules.find((rule) => rule.path.at(-1) === "summaryModel");
 
-    expect(summaryRule?.match?.("openai-codex/gpt-5.5", cfg)).toBe(true);
+    expect(summaryRule?.match?.("openai-codex/gpt-5.6-sol", cfg)).toBe(true);
   });
 
   it("repairs expansionModel subagent policy while preserving Lossless config", () => {
@@ -101,7 +101,7 @@ describe("doctor contract runtime LLM compatibility", () => {
             enabled: true,
             config: {
               enabled: true,
-              expansionModel: "openai/gpt-5.4-mini",
+              expansionModel: "openai/gpt-5.6-luna",
               delegationTimeoutMs: 300000,
             },
           },
@@ -113,12 +113,12 @@ describe("doctor contract runtime LLM compatibility", () => {
 
     expect(mutation.config.plugins.entries["lossless-claw"].config).toEqual({
       enabled: true,
-      expansionModel: "openai/gpt-5.4-mini",
+      expansionModel: "openai/gpt-5.6-luna",
       delegationTimeoutMs: 300000,
     });
     expect(mutation.config.plugins.entries["lossless-claw"].subagent).toEqual({
       allowModelOverride: true,
-      allowedModels: ["openai/gpt-5.4-mini"],
+      allowedModels: ["openai/gpt-5.6-luna"],
     });
     expect(mutation.config.plugins.entries["lossless-claw"]).not.toHaveProperty("llm");
     expect(mutation.changes.join("\n")).toContain(
@@ -132,7 +132,7 @@ describe("doctor contract runtime LLM compatibility", () => {
         entries: {
           "lossless-claw": {
             config: {
-              expansionModel: "openai/gpt-5.4-mini",
+              expansionModel: "openai/gpt-5.6-luna",
             },
           },
         },
@@ -141,7 +141,7 @@ describe("doctor contract runtime LLM compatibility", () => {
 
     const expansionRule = legacyConfigRules.find((rule) => rule.path.at(-1) === "expansionModel");
 
-    expect(expansionRule?.match?.("openai/gpt-5.4-mini", cfg)).toBe(true);
+    expect(expansionRule?.match?.("openai/gpt-5.6-luna", cfg)).toBe(true);
   });
 
   it("treats wildcard allowedModels as covering configured summary and expansion models", () => {
@@ -150,8 +150,8 @@ describe("doctor contract runtime LLM compatibility", () => {
         entries: {
           "lossless-claw": {
             config: {
-              summaryModel: "openai-codex/gpt-5.5",
-              expansionModel: "openai/gpt-5.4-mini",
+              summaryModel: "openai-codex/gpt-5.6-sol",
+              expansionModel: "openai/gpt-5.6-luna",
             },
             llm: {
               allowModelOverride: true,
@@ -170,8 +170,8 @@ describe("doctor contract runtime LLM compatibility", () => {
     const expansionRule = legacyConfigRules.find((rule) => rule.path.at(-1) === "expansionModel");
     const mutation = normalizeCompatibilityConfig({ cfg });
 
-    expect(summaryRule?.match?.("openai-codex/gpt-5.5", cfg)).toBe(false);
-    expect(expansionRule?.match?.("openai/gpt-5.4-mini", cfg)).toBe(false);
+    expect(summaryRule?.match?.("openai-codex/gpt-5.6-sol", cfg)).toBe(false);
+    expect(expansionRule?.match?.("openai/gpt-5.6-luna", cfg)).toBe(false);
     expect(mutation.changes).toEqual([]);
     expect(mutation.config.plugins.entries["lossless-claw"].llm.allowedModels).toEqual(["*"]);
     expect(mutation.config.plugins.entries["lossless-claw"].subagent.allowedModels).toEqual(["*"]);
@@ -200,7 +200,7 @@ describe("doctor contract runtime LLM compatibility", () => {
         entries: {
           "lossless-claw": {
             config: {
-              expansionModel: "gpt-5.4-mini",
+              expansionModel: "gpt-5.6-luna",
             },
           },
         },

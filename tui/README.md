@@ -63,7 +63,7 @@ lcm-tui backfill my-agent session_abc --apply --recompact --single-root # re-fol
 lcm-tui prompts --list                               # show active prompt sources
 ```
 
-By default, summary-producing TUI operations use `openai-codex` with `gpt-5.4`, delegating through the Codex CLI OAuth session after `codex login`. Keep `--provider openai` for direct OpenAI-compatible HTTP calls with a raw `OPENAI_API_KEY`.
+By default, summary-producing TUI operations use `openai-codex` with `gpt-5.6-terra`, delegating through the Codex CLI OAuth session after `codex login`. Keep `--provider openai` for direct OpenAI-compatible HTTP calls with a raw `OPENAI_API_KEY`.
 
 ## Documentation
 
@@ -73,7 +73,7 @@ Full reference with keybindings, screen descriptions, flag tables, and troublesh
 
 The TUI reads directly from the LCM SQLite database (`~/.openclaw/lcm.db`) and session JSONL files (`~/.openclaw/agents/`). Write operations (rewrite, repair, dissolve, transplant, backfill) use transactions. Changes take effect on the next conversation turn — no restart needed.
 
-Doctor, repair, rewrite, and backfill compaction operations all accept `--provider`, `--model`, and `--base-url`, and they also honor `LCM_TUI_SUMMARY_PROVIDER`, `LCM_TUI_SUMMARY_MODEL`, and `LCM_TUI_SUMMARY_BASE_URL` before falling back to the legacy `LCM_SUMMARY_*` settings. By default, these operations use `openai-codex` with `gpt-5.4`, so Codex CLI OAuth is preferred over raw API-key access.
+Doctor, repair, rewrite, and backfill compaction operations all accept `--provider`, `--model`, and `--base-url`, and they also honor `LCM_TUI_SUMMARY_PROVIDER`, `LCM_TUI_SUMMARY_MODEL`, and `LCM_TUI_SUMMARY_BASE_URL` before falling back to the legacy `LCM_SUMMARY_*` settings. By default, these operations use `openai-codex` with `gpt-5.6-terra`, so Codex CLI OAuth is preferred over raw API-key access.
 
 ## License
 

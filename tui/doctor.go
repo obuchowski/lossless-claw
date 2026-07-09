@@ -264,7 +264,7 @@ Flags:
   --summary           scan only and show counts
   --all               scan all conversations (discovery mode only)
   --provider <id>     API provider (default: openai-codex)
-  --model <model>     API model (default: gpt-5.4)
+  --model <model>     API model (default: gpt-5.6-terra)
   --base-url <url>    custom API base URL (overrides config and env)
   --show-diff         show unified diff for each fix
   --timestamps        inject timestamps into rewrite source text

@@ -692,7 +692,7 @@ describe("createLcmExpandQueryTool", () => {
         config: {
           ...deps.config,
           expansionProvider: "openai-codex",
-          expansionModel: "gpt-5.4",
+          expansionModel: "gpt-5.6-terra",
         },
       },
       lcm: makeEngine({ retrieval }),
@@ -718,7 +718,7 @@ describe("createLcmExpandQueryTool", () => {
 
     expect(agentCall?.params).toMatchObject({
       provider: "openai-codex",
-      model: "gpt-5.4",
+      model: "gpt-5.6-terra",
     });
   });
 
@@ -776,7 +776,7 @@ describe("createLcmExpandQueryTool", () => {
         config: {
           ...deps.config,
           expansionProvider: "openai-codex",
-          expansionModel: "gpt-5.4",
+          expansionModel: "gpt-5.6-terra",
         },
       },
       lcm: makeEngine({ retrieval }),
@@ -801,7 +801,7 @@ describe("createLcmExpandQueryTool", () => {
     expect(agentCallsWithParams).toHaveLength(2);
     expect(agentCallsWithParams[0]?.params).toMatchObject({
       provider: "openai-codex",
-      model: "gpt-5.4",
+      model: "gpt-5.6-terra",
     });
     expect(agentCallsWithParams[1]?.params).not.toHaveProperty("provider");
     expect(agentCallsWithParams[1]?.params).not.toHaveProperty("model");
@@ -869,7 +869,7 @@ describe("createLcmExpandQueryTool", () => {
         config: {
           ...deps.config,
           expansionProvider: "openai-codex",
-          expansionModel: "gpt-5.4",
+          expansionModel: "gpt-5.6-terra",
         },
       },
       lcm: makeEngine({ retrieval }),
@@ -894,7 +894,7 @@ describe("createLcmExpandQueryTool", () => {
     expect(agentCallsWithParams).toHaveLength(2);
     expect(agentCallsWithParams[0]?.params).toMatchObject({
       provider: "openai-codex",
-      model: "gpt-5.4",
+      model: "gpt-5.6-terra",
     });
     expect(agentCallsWithParams[1]?.params).not.toHaveProperty("provider");
     expect(agentCallsWithParams[1]?.params).not.toHaveProperty("model");
@@ -917,7 +917,7 @@ describe("createLcmExpandQueryTool", () => {
         agentCalls += 1;
         if (agentCalls === 1) {
           throw new Error(
-            'Model override "openai-codex/gpt-5.4-mini" is not allowed for agent "main".',
+            'Model override "openai-codex/gpt-5.6-luna" is not allowed for agent "main".',
           );
         }
         return { runId: "run-default-model" };
@@ -959,7 +959,7 @@ describe("createLcmExpandQueryTool", () => {
         config: {
           ...deps.config,
           expansionProvider: "openai-codex",
-          expansionModel: "gpt-5.4-mini",
+          expansionModel: "gpt-5.6-luna",
         },
       },
       lcm: makeEngine({ retrieval }),
@@ -984,7 +984,7 @@ describe("createLcmExpandQueryTool", () => {
     expect(agentCallsWithParams).toHaveLength(2);
     expect(agentCallsWithParams[0]?.params).toMatchObject({
       provider: "openai-codex",
-      model: "gpt-5.4-mini",
+      model: "gpt-5.6-luna",
     });
     expect(agentCallsWithParams[1]?.params).not.toHaveProperty("provider");
     expect(agentCallsWithParams[1]?.params).not.toHaveProperty("model");

@@ -838,7 +838,7 @@ describe("LcmContextEngine afterTurn", () => {
       tokenBudget: 4_096,
       runtimeContext: {
         provider: "openai",
-        model: "gpt-5.4",
+        model: "gpt-5.6-terra",
         currentTokenCount: 500,
       },
     });
@@ -877,7 +877,7 @@ describe("LcmContextEngine afterTurn", () => {
       tokenBudget: 4_096,
       runtimeContext: {
         provider: "openai",
-        model: "gpt-5.4",
+        model: "gpt-5.6-terra",
       },
     });
 
@@ -1082,7 +1082,7 @@ describe("LcmContextEngine afterTurn", () => {
       runtimeContext: {
         currentTokenCount: 50_000,
         provider: "openai",
-        model: "gpt-5.5",
+        model: "gpt-5.6-sol",
       },
     });
 
@@ -3443,7 +3443,7 @@ describe("LcmContextEngine afterTurn", () => {
     const oldSessionFile = createSessionFilePath("after-turn-missed-reset-fallback-old");
     writeLeafTranscript(oldSessionFile, [
       { role: "user", content: "old turn user" },
-      { role: "assistant", content: "openai-codex/gpt-5.5" },
+      { role: "assistant", content: "openai-codex/gpt-5.6-sol" },
     ]);
 
     const first = await engine.bootstrap({
@@ -4348,7 +4348,7 @@ describe("LcmContextEngine afterTurn", () => {
       runtimeContext: {
         currentTokenCount: 189_666,
         provider: "openai-codex",
-        model: "gpt-5.5",
+        model: "gpt-5.6-sol",
         promptCache: {
           retention: "long",
           lastCallUsage: {
@@ -4373,7 +4373,7 @@ describe("LcmContextEngine afterTurn", () => {
           compactionTarget: "threshold",
           legacyParams: {
             provider: "openai-codex",
-            model: "gpt-5.5",
+            model: "gpt-5.6-sol",
           },
         }),
       );

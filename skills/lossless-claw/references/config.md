@@ -36,7 +36,7 @@ Optional ordered rules that choose a different compaction threshold, and optiona
 
 Supported match fields:
 
-- `model`: exact runtime model id, such as `openai/gpt-5.5`
+- `model`: exact runtime model id, such as `openai/gpt-5.6-sol`
 - `modelContextWindowMin`: match models/windows at or above this token count
 - `modelContextWindowMax`: match models/windows at or below this token count
 - `sessionPattern`: session-key glob, using the same `*` and `**` semantics as ignored/stateless sessions

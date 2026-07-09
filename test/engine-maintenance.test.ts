@@ -48,7 +48,7 @@ describe("LcmContextEngine maintain and assemble budget", () => {
     const oldSessionFile = createSessionFilePath("assemble-ambiguous-rollover-old");
     writeLeafTranscript(oldSessionFile, [
       { role: "user", content: "what model produced the stale answer?" },
-      { role: "assistant", content: "openai-codex/gpt-5.5" },
+      { role: "assistant", content: "openai-codex/gpt-5.6-sol" },
     ]);
     await engine.bootstrap({
       sessionId: firstSessionId,
@@ -72,7 +72,7 @@ describe("LcmContextEngine maintain and assemble budget", () => {
 
     expect(assembled.messages).toEqual(liveMessages);
     expect(
-      assembled.messages.some((message) => message.content === "openai-codex/gpt-5.5"),
+      assembled.messages.some((message) => message.content === "openai-codex/gpt-5.6-sol"),
     ).toBe(false);
     expect(
       warnLog.mock.calls

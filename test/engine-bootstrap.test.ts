@@ -747,7 +747,7 @@ describe("LcmContextEngine.bootstrap", () => {
     const firstSessionFile = createSessionFilePath("assemble-missed-reset-fallback-old");
     writeLeafTranscript(firstSessionFile, [
       { role: "user", content: "what model produced this response?" },
-      { role: "assistant", content: "openai-codex/gpt-5.5" },
+      { role: "assistant", content: "openai-codex/gpt-5.6-sol" },
     ]);
 
     const first = await engine.bootstrap({
@@ -783,7 +783,7 @@ describe("LcmContextEngine.bootstrap", () => {
 
     expect(assembled.messages).toEqual(liveMessages);
     expect(
-      assembled.messages.some((message) => message.content === "openai-codex/gpt-5.5"),
+      assembled.messages.some((message) => message.content === "openai-codex/gpt-5.6-sol"),
     ).toBe(false);
 
     const activeConversationBeforeAfterTurn = await engine.getConversationStore().getConversationForSession({
@@ -1660,7 +1660,7 @@ describe("LcmContextEngine.bootstrap", () => {
       conversationId: conversation!.conversationId,
       cacheState: "unknown",
       provider: "openai",
-      model: "gpt-5.5",
+      model: "gpt-5.6-sol",
     });
 
     const rotate = await engine.rotateSessionStorageWithBackup({
@@ -1671,7 +1671,7 @@ describe("LcmContextEngine.bootstrap", () => {
     });
 
     expect(rotate).toMatchObject({ kind: "rotated" });
-    expect(resolveModel).toHaveBeenCalledWith("gpt-5.5", "openai");
+    expect(resolveModel).toHaveBeenCalledWith("gpt-5.6-sol", "openai");
     expect(complete).toHaveBeenCalled();
   });
 

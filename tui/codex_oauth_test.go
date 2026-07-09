@@ -87,7 +87,7 @@ func TestSummarizeOpenAICodexOAuthDelegatesToCLI(t *testing.T) {
 
 	t.Setenv("GO_WANT_HELPER_PROCESS", "1")
 	t.Setenv("LCM_HELPER_STDOUT", "Codex CLI summary")
-	t.Setenv("LCM_EXPECT_MODEL", "gpt-5.4")
+	t.Setenv("LCM_EXPECT_MODEL", "gpt-5.6-terra")
 	t.Setenv("LCM_EXPECT_PROMPT_SHA256", hashPrompt(cliSummarizationSystemPrompt+"\n\n"+"say hello"))
 	t.Setenv("OPENAI_API_KEY", "should-be-filtered")
 
@@ -95,7 +95,7 @@ func TestSummarizeOpenAICodexOAuthDelegatesToCLI(t *testing.T) {
 	client := &anthropicClient{
 		provider: "openai-codex",
 		apiKey:   "",
-		model:    "gpt-5.4",
+		model:    "gpt-5.6-terra",
 		http: &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
 			httpCalled = true
 			return jsonResponse(500, `{"error":"should not be called"}`), nil
@@ -122,7 +122,7 @@ func TestSummarizeOpenAICodexAPIKeyHitsDirectAPI(t *testing.T) {
 	client := &anthropicClient{
 		provider: "openai-codex",
 		apiKey:   "sk-oai-test-key",
-		model:    "gpt-5.4",
+		model:    "gpt-5.6-terra",
 		baseURL:  "https://api.openai.com",
 		http: &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
 			capturedAuth = req.Header.Get("Authorization")
@@ -151,7 +151,7 @@ func TestSummarizeRejectsEmptyKeyForCodexWithoutOAuth(t *testing.T) {
 	client := &anthropicClient{
 		provider: "openai-codex",
 		apiKey:   "",
-		model:    "gpt-5.4",
+		model:    "gpt-5.6-terra",
 		http:     &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) { return nil, nil })},
 	}
 
@@ -246,7 +246,7 @@ func TestSummarizeOpenAICodexOAuthMissingCLIReturnsActionableError(t *testing.T)
 	client := &anthropicClient{
 		provider: "openai-codex",
 		apiKey:   "",
-		model:    "gpt-5.4",
+		model:    "gpt-5.6-terra",
 		http:     &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) { return nil, nil })},
 	}
 
@@ -268,14 +268,14 @@ func TestSummarizeOpenAICodexOAuthSurfacesCLIStderr(t *testing.T) {
 	stubCodexCLI(t)
 
 	t.Setenv("GO_WANT_HELPER_PROCESS", "1")
-	t.Setenv("LCM_EXPECT_MODEL", "gpt-5.4")
+	t.Setenv("LCM_EXPECT_MODEL", "gpt-5.6-terra")
 	t.Setenv("LCM_HELPER_STDERR", "codex: refresh failed 401")
 	t.Setenv("LCM_HELPER_EXIT_CODE", "2")
 
 	client := &anthropicClient{
 		provider: "openai-codex",
 		apiKey:   "",
-		model:    "gpt-5.4",
+		model:    "gpt-5.6-terra",
 		http:     &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) { return nil, nil })},
 	}
 
@@ -297,13 +297,13 @@ func TestSummarizeOpenAICodexOAuthRejectsEmptyCLIOutput(t *testing.T) {
 	stubCodexCLI(t)
 
 	t.Setenv("GO_WANT_HELPER_PROCESS", "1")
-	t.Setenv("LCM_EXPECT_MODEL", "gpt-5.4")
+	t.Setenv("LCM_EXPECT_MODEL", "gpt-5.6-terra")
 	t.Setenv("LCM_HELPER_STDOUT", "")
 
 	client := &anthropicClient{
 		provider: "openai-codex",
 		apiKey:   "",
-		model:    "gpt-5.4",
+		model:    "gpt-5.6-terra",
 		http:     &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) { return nil, nil })},
 	}
 
@@ -321,13 +321,13 @@ func TestSummarizeOpenAICodexOAuthRejectsOversizeCLIOutput(t *testing.T) {
 	stubCodexCLI(t)
 
 	t.Setenv("GO_WANT_HELPER_PROCESS", "1")
-	t.Setenv("LCM_EXPECT_MODEL", "gpt-5.4")
+	t.Setenv("LCM_EXPECT_MODEL", "gpt-5.6-terra")
 	t.Setenv("LCM_HELPER_STDOUT", strings.Repeat("word ", 200))
 
 	client := &anthropicClient{
 		provider: "openai-codex",
 		apiKey:   "",
-		model:    "gpt-5.4",
+		model:    "gpt-5.6-terra",
 		http:     &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) { return nil, nil })},
 	}
 

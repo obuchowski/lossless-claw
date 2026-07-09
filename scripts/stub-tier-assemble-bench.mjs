@@ -123,7 +123,7 @@ const deps = {
   log: noopLog,
   complete: async () => ({ content: [{ type: "text", text: "noop" }] }),
   callGateway: async () => ({}),
-  resolveModel: () => ({ provider: "openai-codex", model: "gpt-5.4-mini" }),
+  resolveModel: () => ({ provider: "openai-codex", model: "gpt-5.6-luna" }),
   getApiKey: async () => "noop",
   requireApiKey: async () => "noop",
   parseAgentSessionKey: (sk) => {

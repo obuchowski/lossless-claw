@@ -61,7 +61,7 @@ func TestLoadSessionBatchIncludesCodexBackendMetadata(t *testing.T) {
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatalf("write session file: %v", err)
 	}
-	binding := `{"threadId":"` + threadID + `","model":"gpt-5.5"}`
+	binding := `{"threadId":"` + threadID + `","model":"gpt-5.6-sol"}`
 	if err := os.WriteFile(path+".codex-app-server.json", []byte(binding), 0o644); err != nil {
 		t.Fatalf("write codex binding: %v", err)
 	}

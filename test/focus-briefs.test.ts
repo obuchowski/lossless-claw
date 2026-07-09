@@ -222,7 +222,7 @@ describe("focus brief generation", () => {
     const result = await runDelegatedFocusBrief({
       deps: createDeps(callGateway as LcmDependencies["callGateway"], {
         summaryProvider: "openai",
-        summaryModel: "gpt-5.5",
+        summaryModel: "gpt-5.6-sol",
         expansionProvider: "openrouter",
         expansionModel: "anthropic/claude-haiku-4-5",
       }),
@@ -236,7 +236,7 @@ describe("focus brief generation", () => {
     expect(agentParams).toHaveLength(2);
     for (const params of agentParams) {
       expect(params.provider).toBe("openai");
-      expect(params.model).toBe("gpt-5.5");
+      expect(params.model).toBe("gpt-5.6-sol");
     }
   });
 

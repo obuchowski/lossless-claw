@@ -3261,8 +3261,8 @@ describe("lcm command", () => {
     ]);
     const runtimeContext = {
       provider: "openai",
-      model: "gpt-5.5",
-      config: { agents: { defaults: { model: "openai/gpt-5.5" } } },
+      model: "gpt-5.6-sol",
+      config: { agents: { defaults: { model: "openai/gpt-5.6-sol" } } },
     };
 
     const result = await fixture.command.handler(

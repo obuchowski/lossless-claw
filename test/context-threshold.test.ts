@@ -9,18 +9,18 @@ import { readRuntimeModelContext } from "../src/runtime-model.js";
 
 describe("readRuntimeModelContext", () => {
   it("extracts provider, model, and modelRef from a runtime bag", () => {
-    expect(readRuntimeModelContext({ provider: "openai", model: "gpt-5.5" })).toEqual({
+    expect(readRuntimeModelContext({ provider: "openai", model: "gpt-5.6-sol" })).toEqual({
       provider: "openai",
-      model: "gpt-5.5",
-      modelRef: "openai/gpt-5.5",
+      model: "gpt-5.6-sol",
+      modelRef: "openai/gpt-5.6-sol",
     });
   });
 
   it("keeps an already-qualified model id as the modelRef", () => {
-    expect(readRuntimeModelContext({ provider: "openai", model: "openai/gpt-5.5" })).toEqual({
+    expect(readRuntimeModelContext({ provider: "openai", model: "openai/gpt-5.6-sol" })).toEqual({
       provider: "openai",
-      model: "openai/gpt-5.5",
-      modelRef: "openai/gpt-5.5",
+      model: "openai/gpt-5.6-sol",
+      modelRef: "openai/gpt-5.6-sol",
     });
   });
 
@@ -50,13 +50,13 @@ describe("readRuntimeModelContext", () => {
   it("prefers earlier bags over later ones", () => {
     expect(
       readRuntimeModelContext(
-        { model: "gpt-5.5", contextWindow: 400_000 },
+        { model: "gpt-5.6-sol", contextWindow: 400_000 },
         { provider: "legacy", model: "old-model", modelContextWindow: 200_000 },
       ),
     ).toEqual({
       provider: "legacy",
-      model: "gpt-5.5",
-      modelRef: "legacy/gpt-5.5",
+      model: "gpt-5.6-sol",
+      modelRef: "legacy/gpt-5.6-sol",
       modelContextWindow: 400_000,
     });
   });
@@ -82,13 +82,13 @@ describe("ContextThresholdResolver", () => {
   it("matches an exact model id against modelRef or bare model", () => {
     const resolver = new ContextThresholdResolver(0.75, [
       {
-        match: { model: "openai/gpt-5.5" },
+        match: { model: "openai/gpt-5.6-sol" },
         contextThreshold: 0.3,
         leafChunkTokens: 12000,
       },
     ]);
     expect(
-      resolver.resolve({ runtime: readRuntimeModelContext({ provider: "openai", model: "gpt-5.5" }) }),
+      resolver.resolve({ runtime: readRuntimeModelContext({ provider: "openai", model: "gpt-5.6-sol" }) }),
     ).toMatchObject({
       contextThreshold: 0.3,
       source: "override",
@@ -96,10 +96,10 @@ describe("ContextThresholdResolver", () => {
       leafChunkTokens: 12000,
     });
     expect(
-      resolver.resolve({ runtime: readRuntimeModelContext({ model: "openai/gpt-5.5" }) }),
+      resolver.resolve({ runtime: readRuntimeModelContext({ model: "openai/gpt-5.6-sol" }) }),
     ).toMatchObject({ contextThreshold: 0.3, source: "override" });
     expect(
-      resolver.resolve({ runtime: readRuntimeModelContext({ model: "gpt-5.5" }) }),
+      resolver.resolve({ runtime: readRuntimeModelContext({ model: "gpt-5.6-sol" }) }),
     ).toMatchObject({ contextThreshold: 0.75, source: "global" });
   });
 
@@ -133,11 +133,11 @@ describe("ContextThresholdResolver", () => {
   it("ANDs all matchers within a rule", () => {
     const resolver = new ContextThresholdResolver(0.75, [
       {
-        match: { model: "openai/gpt-5.5", sessionPattern: "agent:*:telegram:**" },
+        match: { model: "openai/gpt-5.6-sol", sessionPattern: "agent:*:telegram:**" },
         contextThreshold: 0.2,
       },
     ]);
-    const runtime = readRuntimeModelContext({ provider: "openai", model: "gpt-5.5" });
+    const runtime = readRuntimeModelContext({ provider: "openai", model: "gpt-5.6-sol" });
     expect(
       resolver.resolve({ sessionKey: "agent:main:telegram:group:1", runtime }),
     ).toMatchObject({ contextThreshold: 0.2, source: "override" });
@@ -152,12 +152,12 @@ describe("ContextThresholdResolver", () => {
   it("picks the highest-specificity match, breaking ties by config order", () => {
     const resolver = new ContextThresholdResolver(0.75, [
       { name: "window", match: { modelContextWindowMin: 100_000 }, contextThreshold: 0.5 },
-      { name: "model", match: { model: "openai/gpt-5.5" }, contextThreshold: 0.2 },
+      { name: "model", match: { model: "openai/gpt-5.6-sol" }, contextThreshold: 0.2 },
       { name: "window-dup", match: { modelContextWindowMin: 100_000 }, contextThreshold: 0.4 },
     ]);
     const runtime = readRuntimeModelContext({
       provider: "openai",
-      model: "gpt-5.5",
+      model: "gpt-5.6-sol",
       modelContextWindow: 400_000,
     });
     // Exact model (100) outranks window bounds (20).

@@ -701,7 +701,7 @@ describe("lcm plugin registration", () => {
   it("stores plugin summary overrides in resolved LCM config", () => {
     const { api, getFactory } = buildApi({
       enabled: true,
-      summaryModel: "gpt-5.4",
+      summaryModel: "gpt-5.6-terra",
       summaryProvider: "openai-resp",
     });
 
@@ -712,7 +712,7 @@ describe("lcm plugin registration", () => {
 
     const engine = factory!() as { config: Record<string, unknown> };
     expect(engine.config).toMatchObject({
-      summaryModel: "gpt-5.4",
+      summaryModel: "gpt-5.6-terra",
       summaryProvider: "openai-resp",
     });
   });
@@ -720,7 +720,7 @@ describe("lcm plugin registration", () => {
   it("uses plugin config model override when summaryModel is set", () => {
     const { api, getFactory } = buildApi({
       enabled: true,
-      summaryModel: "gpt-5.4",
+      summaryModel: "gpt-5.6-terra",
       summaryProvider: "openai-resp",
     });
     api.config = defaultModelConfig("anthropic/claude-sonnet-4-6") as OpenClawPluginApi["config"];
@@ -737,7 +737,7 @@ describe("lcm plugin registration", () => {
 
     expect(resolved).toEqual({
       provider: "openai-resp",
-      model: "gpt-5.4",
+      model: "gpt-5.6-terra",
     });
   });
 
@@ -793,7 +793,7 @@ describe("lcm plugin registration", () => {
     vi.stubEnv("LCM_SUMMARY_MODEL", "claude-3-5-haiku");
     const { api, getFactory } = buildApi({
       enabled: true,
-      summaryModel: "gpt-5.4",
+      summaryModel: "gpt-5.6-terra",
       summaryProvider: "openai-resp",
     });
     api.config = defaultModelConfig("anthropic/claude-sonnet-4-6") as OpenClawPluginApi["config"];
@@ -816,7 +816,7 @@ describe("lcm plugin registration", () => {
   it("uses plugin config model with provider/model format", () => {
     const { api, getFactory } = buildApi({
       enabled: true,
-      summaryModel: "openai-resp/gpt-5.4",
+      summaryModel: "openai-resp/gpt-5.6-terra",
     });
     api.config = defaultModelConfig("anthropic/claude-sonnet-4-6") as OpenClawPluginApi["config"];
 
@@ -832,14 +832,14 @@ describe("lcm plugin registration", () => {
 
     expect(resolved).toEqual({
       provider: "openai-resp",
-      model: "gpt-5.4",
+      model: "gpt-5.6-terra",
     });
   });
 
   it("keeps explicit provider hints ahead of plugin summaryProvider", () => {
     const { api, getFactory } = buildApi({
       enabled: true,
-      summaryModel: "gpt-5.4",
+      summaryModel: "gpt-5.6-terra",
       summaryProvider: "openai-resp",
     });
     api.config = defaultModelConfig("anthropic/claude-sonnet-4-6") as OpenClawPluginApi["config"];
@@ -856,14 +856,14 @@ describe("lcm plugin registration", () => {
 
     expect(resolved).toEqual({
       provider: "anthropic",
-      model: "gpt-5.4",
+      model: "gpt-5.6-terra",
     });
   });
 
   it("logs compaction summarization overrides at startup", () => {
     const { api, infoLog, sessionInfoLog } = buildApi({
       enabled: true,
-      summaryModel: "gpt-5.4",
+      summaryModel: "gpt-5.6-terra",
       summaryProvider: "openai-resp",
     });
     api.config = defaultModelConfig("anthropic/claude-sonnet-4-6") as OpenClawPluginApi["config"];
@@ -871,7 +871,7 @@ describe("lcm plugin registration", () => {
     lcmPlugin.register(api);
 
     expect(infoLog).toHaveBeenCalledWith(
-      "[lcm] Compaction summarization model: openai-resp/gpt-5.4 (override)",
+      "[lcm] Compaction summarization model: openai-resp/gpt-5.6-terra (override)",
     );
     expect(sessionInfoLog).not.toHaveBeenCalled();
   });
@@ -879,14 +879,14 @@ describe("lcm plugin registration", () => {
   it("warns when configured summary models need runtime LLM allowlist policy", () => {
     const { api, warnLog } = buildApi({
       enabled: true,
-      summaryModel: "openai-codex/gpt-5.5",
+      summaryModel: "openai-codex/gpt-5.6-sol",
     });
     api.config = {
       plugins: {
         entries: {
           "lossless-claw": {
             config: {
-              summaryModel: "openai-codex/gpt-5.5",
+              summaryModel: "openai-codex/gpt-5.6-sol",
             },
           },
         },
@@ -899,7 +899,7 @@ describe("lcm plugin registration", () => {
       expect.stringContaining("openclaw doctor --fix"),
     );
     expect(warnLog).toHaveBeenCalledWith(
-      expect.stringContaining("summaryModel=openai-codex/gpt-5.5"),
+      expect.stringContaining("summaryModel=openai-codex/gpt-5.6-sol"),
     );
     expect(warnLog).toHaveBeenCalledWith(
       expect.stringContaining("plugins.entries.lossless-claw.llm.allowModelOverride"),
@@ -909,18 +909,18 @@ describe("lcm plugin registration", () => {
   it("does not warn when configured summary models are allowlisted for runtime LLM", () => {
     const { api, warnLog } = buildApi({
       enabled: true,
-      summaryModel: "openai-codex/gpt-5.5",
+      summaryModel: "openai-codex/gpt-5.6-sol",
     });
     api.config = {
       plugins: {
         entries: {
           "lossless-claw": {
             config: {
-              summaryModel: "openai-codex/gpt-5.5",
+              summaryModel: "openai-codex/gpt-5.6-sol",
             },
             llm: {
               allowModelOverride: true,
-              allowedModels: ["openai-codex/gpt-5.5"],
+              allowedModels: ["openai-codex/gpt-5.6-sol"],
             },
           },
         },
@@ -938,7 +938,7 @@ describe("lcm plugin registration", () => {
     const { api, warnLog } = buildApi({
       enabled: true,
       summaryProvider: "openai",
-      summaryModel: "openai/gpt-5.5",
+      summaryModel: "openai/gpt-5.6-sol",
     });
     api.config = {
       plugins: {
@@ -946,11 +946,11 @@ describe("lcm plugin registration", () => {
           "lossless-claw": {
             config: {
               summaryProvider: "openai",
-              summaryModel: "openai/gpt-5.5",
+              summaryModel: "openai/gpt-5.6-sol",
             },
             llm: {
               allowModelOverride: true,
-              allowedModels: ["openai/gpt-5.5"],
+              allowedModels: ["openai/gpt-5.6-sol"],
             },
           },
         },
@@ -960,7 +960,7 @@ describe("lcm plugin registration", () => {
     lcmPlugin.register(api);
 
     expect(warnLog).not.toHaveBeenCalledWith(
-      expect.stringContaining("openai/openai/gpt-5.5"),
+      expect.stringContaining("openai/openai/gpt-5.6-sol"),
     );
     expect(warnLog).not.toHaveBeenCalledWith(
       expect.stringContaining("Runtime LLM model override policy"),
@@ -977,7 +977,7 @@ describe("lcm plugin registration", () => {
               "lossless-claw": {
                 enabled: true,
                 config: {
-                  summaryModel: "openai-codex/gpt-5.4",
+                  summaryModel: "openai-codex/gpt-5.6-terra",
                 },
               },
             },
@@ -990,7 +990,7 @@ describe("lcm plugin registration", () => {
     lcmPlugin.register(api);
 
     expect(infoLog).toHaveBeenCalledWith(
-      "[lcm] Compaction summarization model: openai-codex/gpt-5.4 (override)",
+      "[lcm] Compaction summarization model: openai-codex/gpt-5.6-terra (override)",
     );
   });
 
@@ -1002,7 +1002,7 @@ describe("lcm plugin registration", () => {
           "lossless-claw": {
             enabled: true,
             config: {
-              summaryModel: "openai-codex/gpt-5.5",
+              summaryModel: "openai-codex/gpt-5.6-sol",
             },
           },
         },
@@ -1024,7 +1024,7 @@ describe("lcm plugin registration", () => {
     expect(current).toHaveBeenCalled();
     expect(loadConfig).not.toHaveBeenCalled();
     expect(infoLog).toHaveBeenCalledWith(
-      "[lcm] Compaction summarization model: openai-codex/gpt-5.5 (override)",
+      "[lcm] Compaction summarization model: openai-codex/gpt-5.6-sol (override)",
     );
   });
 
@@ -1129,7 +1129,7 @@ describe("lcm plugin registration", () => {
     });
     api.config = compactionAndDefaultModelConfig({
       compactionModel: "anthropic/claude-opus-4-6",
-      defaultModel: "openai-codex/gpt-5.4",
+      defaultModel: "openai-codex/gpt-5.6-terra",
     }) as OpenClawPluginApi["config"];
     lcmPlugin.register(api);
 
@@ -1140,7 +1140,7 @@ describe("lcm plugin registration", () => {
 
   it("prefers env summary overrides over the OpenClaw compaction model in the startup banner", () => {
     vi.stubEnv("LCM_SUMMARY_PROVIDER", "openai-codex");
-    vi.stubEnv("LCM_SUMMARY_MODEL", "gpt-5.4");
+    vi.stubEnv("LCM_SUMMARY_MODEL", "gpt-5.6-terra");
     const { api, infoLog } = buildApi({
       enabled: true,
     });
@@ -1151,7 +1151,7 @@ describe("lcm plugin registration", () => {
     lcmPlugin.register(api);
 
     expect(infoLog).toHaveBeenCalledWith(
-      "[lcm] Compaction summarization model: openai-codex/gpt-5.4 (override)",
+      "[lcm] Compaction summarization model: openai-codex/gpt-5.6-terra (override)",
     );
   });
 

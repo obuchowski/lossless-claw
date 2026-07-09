@@ -272,8 +272,8 @@ describe("createLcmSummarizeFromLegacyParams", () => {
         if (modelRef === "anthropic/claude-sonnet-4-6") {
           return { provider: "anthropic", model: "claude-sonnet-4-6" };
         }
-        if (modelRef === "gpt-5.4") {
-          return { provider: providerHint ?? "openai-codex", model: "gpt-5.4" };
+        if (modelRef === "gpt-5.6-terra") {
+          return { provider: providerHint ?? "openai-codex", model: "gpt-5.6-terra" };
         }
         throw new Error(`unexpected modelRef: ${String(modelRef)}`);
       }),
@@ -286,7 +286,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
       deps,
       legacyParams: {
         provider: "openai-codex",
-        model: "gpt-5.4",
+        model: "gpt-5.6-terra",
         config: {
           agents: {
             defaults: {
@@ -359,7 +359,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
       deps,
       legacyParams: {
         provider: "openai-resp",
-        model: "gpt-5.4",
+        model: "gpt-5.6-terra",
       },
     });
 
@@ -368,7 +368,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
   });
 
   it("env summaryModel without summaryProvider inherits plugin summaryProvider before the legacy provider hint", async () => {
-    vi.stubEnv("LCM_SUMMARY_MODEL", "gpt-5.4-mini");
+    vi.stubEnv("LCM_SUMMARY_MODEL", "gpt-5.6-luna");
     const deps = makeDeps();
 
     await createLcmSummarizeFromLegacyParams({
@@ -382,7 +382,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
               "lossless-claw": {
                 config: {
                   summaryProvider: "openai-codex",
-                  summaryModel: "gpt-5.4-mini",
+                  summaryModel: "gpt-5.6-luna",
                 },
               },
             },
@@ -392,11 +392,11 @@ describe("createLcmSummarizeFromLegacyParams", () => {
     });
 
     expect(vi.mocked(deps.resolveModel).mock.calls[0]).toEqual([
-      "gpt-5.4-mini",
+      "gpt-5.6-luna",
       "openai-codex",
     ]);
     expect(vi.mocked(deps.log.warn)).not.toHaveBeenCalledWith(
-      expect.stringContaining("gpt-5.4-mini"),
+      expect.stringContaining("gpt-5.6-luna"),
     );
   });
 
@@ -611,7 +611,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
       deps,
       legacyParams: {
         provider: "openai-codex",
-        model: "gpt-5.4",
+        model: "gpt-5.6-terra",
         config: runtimeConfig,
       },
     });
@@ -1039,7 +1039,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
       const deps = makeDeps({
         resolveModel: vi.fn(() => ({
           provider: "openai-codex",
-          model: "gpt-5.4",
+          model: "gpt-5.6-terra",
         })),
         complete: vi.fn(async () => ({
           content: [],
@@ -1053,7 +1053,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
 
       const result = await createLcmSummarizeFromLegacyParams({
         deps,
-        legacyParams: { provider: "openai-codex", model: "gpt-5.4" },
+        legacyParams: { provider: "openai-codex", model: "gpt-5.6-terra" },
       });
 
       await expect(result!.fn("A".repeat(8_000), false)).rejects.toBeInstanceOf(
@@ -1066,7 +1066,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
       expect(diagnostics).toContain(
         "Check OpenClaw runtime LLM auth and policy for the configured summary model.",
       );
-      expect(diagnostics).toContain("Current: openai-codex/gpt-5.4");
+      expect(diagnostics).toContain("Current: openai-codex/gpt-5.6-terra");
       expect(diagnostics).not.toContain("summarizer auth retry");
       expect(diagnostics).not.toContain("retrying with conservative settings");
       expect(diagnostics).not.toContain("falling back to truncation");
@@ -1114,7 +1114,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
         config: { ...baseConfig, summaryTimeoutMs: 60_000 },
         resolveModel: vi.fn(() => ({
           provider: "openai-codex",
-          model: "gpt-5.4",
+          model: "gpt-5.6-terra",
         })),
         complete: vi.fn(async () => ({
           content: [],
@@ -1128,7 +1128,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
 
       const result = await createLcmSummarizeFromLegacyParams({
         deps,
-        legacyParams: { provider: "openai-codex", model: "gpt-5.4" },
+        legacyParams: { provider: "openai-codex", model: "gpt-5.6-terra" },
       });
 
       await expect(result!.fn("R".repeat(8_000), false)).rejects.toBeInstanceOf(
@@ -1148,7 +1148,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
         },
         resolveModel: vi.fn((modelRef?: string, providerHint?: string) => ({
           provider: providerHint ?? "openai-codex",
-          model: modelRef ?? "gpt-5.4",
+          model: modelRef ?? "gpt-5.6-terra",
         })),
         complete: vi.fn(async () => ({
           content: [],
@@ -1162,7 +1162,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
 
       const result = await createLcmSummarizeFromLegacyParams({
         deps,
-        legacyParams: { provider: "openai-codex", model: "gpt-5.4" },
+        legacyParams: { provider: "openai-codex", model: "gpt-5.6-terra" },
       });
 
       await expect(result!.fn("R".repeat(8_000), false)).rejects.toBeInstanceOf(
@@ -1180,7 +1180,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
       const deps = makeDeps({
         resolveModel: vi.fn(() => ({
           provider: "codex-gateway",
-          model: "gpt-5.4",
+          model: "gpt-5.6-terra",
         })),
         complete: vi
           .fn()
@@ -1195,7 +1195,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
 
       const result = await createLcmSummarizeFromLegacyParams({
         deps,
-        legacyParams: { provider: "codex-gateway", model: "gpt-5.4" },
+        legacyParams: { provider: "codex-gateway", model: "gpt-5.6-terra" },
       });
 
       await expect(result!.fn("B".repeat(8_000), false)).rejects.toBeInstanceOf(
@@ -1205,7 +1205,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
 
       const diagnostics = getDepsLogText(deps);
       expect(diagnostics).toContain("provider auth error (401 / missing model.request scope)");
-      expect(diagnostics).toContain("Current: codex-gateway/gpt-5.4");
+      expect(diagnostics).toContain("Current: codex-gateway/gpt-5.6-terra");
       expect(diagnostics).not.toContain("summarizer auth retry");
       expect(diagnostics).not.toContain("retrying with conservative settings");
     });
@@ -1214,7 +1214,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
       const deps = makeDeps({
         resolveModel: vi.fn(() => ({
           provider: "openai-codex",
-          model: "gpt-5.4",
+          model: "gpt-5.6-terra",
         })),
         complete: vi.fn(async () => {
           throw {
@@ -1229,7 +1229,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
 
       const result = await createLcmSummarizeFromLegacyParams({
         deps,
-        legacyParams: { provider: "openai-codex", model: "gpt-5.4" },
+        legacyParams: { provider: "openai-codex", model: "gpt-5.6-terra" },
       });
 
       await expect(result!.fn("B".repeat(8_000), false)).rejects.toBeInstanceOf(
@@ -1239,7 +1239,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
 
       const diagnostics = getDepsLogText(deps);
       expect(diagnostics).toContain("provider auth error (401 / missing model.request scope)");
-      expect(diagnostics).toContain("Current: openai-codex/gpt-5.4");
+      expect(diagnostics).toContain("Current: openai-codex/gpt-5.6-terra");
       expect(diagnostics).not.toContain("summarizer auth retry");
       expect(diagnostics).not.toContain("summarizer call failed");
       expect(diagnostics).not.toContain("retrying with conservative settings");
@@ -1249,7 +1249,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
       const deps = makeDeps({
         resolveModel: vi.fn(() => ({
           provider: "openai-codex",
-          model: "gpt-5.4",
+          model: "gpt-5.6-terra",
         })),
         complete: vi.fn(async () => ({
           content: [],
@@ -1262,7 +1262,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
 
       const result = await createLcmSummarizeFromLegacyParams({
         deps,
-        legacyParams: { provider: "openai-codex", model: "gpt-5.4" },
+        legacyParams: { provider: "openai-codex", model: "gpt-5.6-terra" },
       });
 
       await expect(result!.fn("C".repeat(8_000), false)).rejects.toBeInstanceOf(
@@ -1301,8 +1301,8 @@ describe("createLcmSummarizeFromLegacyParams", () => {
     it("falls back to the next resolved model when the preferred model fails auth", async () => {
       const deps = makeDeps({
           resolveModel: vi.fn((modelRef?: string, providerHint?: string) => {
-            if (modelRef === "gpt-5.4") {
-              return { provider: providerHint ?? "openai-codex", model: "gpt-5.4" };
+            if (modelRef === "gpt-5.6-terra") {
+              return { provider: providerHint ?? "openai-codex", model: "gpt-5.6-terra" };
             }
             if (modelRef === "anthropic/claude-sonnet-4-6") {
               return { provider: "anthropic", model: "claude-sonnet-4-6" };
@@ -1330,14 +1330,14 @@ describe("createLcmSummarizeFromLegacyParams", () => {
           deps,
           legacyParams: {
             provider: "openai-codex",
-            model: "gpt-5.4",
+            model: "gpt-5.6-terra",
             config: {
               plugins: {
                 entries: {
                   "lossless-claw": {
                     config: {
                       summaryProvider: "openai-codex",
-                      summaryModel: "gpt-5.4",
+                      summaryModel: "gpt-5.6-terra",
                     },
                   },
                 },
@@ -1357,7 +1357,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
       expect(vi.mocked(deps.complete)).toHaveBeenCalledTimes(2);
       expect(vi.mocked(deps.complete).mock.calls[0]?.[0]).toMatchObject({
         provider: "openai-codex",
-        model: "gpt-5.4",
+        model: "gpt-5.6-terra",
       });
       expect(vi.mocked(deps.complete).mock.calls[1]?.[0]).toMatchObject({
         provider: "anthropic",
@@ -1372,8 +1372,8 @@ describe("createLcmSummarizeFromLegacyParams", () => {
     it("falls back to the next resolved model when the provider returns an error response", async () => {
       const deps = makeDeps({
         resolveModel: vi.fn((modelRef?: string, providerHint?: string) => {
-          if (modelRef === "gpt-5.4") {
-            return { provider: providerHint ?? "openai-codex", model: "gpt-5.4" };
+          if (modelRef === "gpt-5.6-terra") {
+            return { provider: providerHint ?? "openai-codex", model: "gpt-5.6-terra" };
           }
           if (modelRef === "anthropic/claude-sonnet-4-6") {
             return { provider: "anthropic", model: "claude-sonnet-4-6" };
@@ -1399,14 +1399,14 @@ describe("createLcmSummarizeFromLegacyParams", () => {
         deps,
         legacyParams: {
           provider: "openai-codex",
-          model: "gpt-5.4",
+          model: "gpt-5.6-terra",
           config: {
             plugins: {
               entries: {
                 "lossless-claw": {
                   config: {
                     summaryProvider: "openai-codex",
-                    summaryModel: "gpt-5.4",
+                    summaryModel: "gpt-5.6-terra",
                   },
                 },
               },
@@ -1426,7 +1426,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
       expect(vi.mocked(deps.complete)).toHaveBeenCalledTimes(2);
       expect(vi.mocked(deps.complete).mock.calls[0]?.[0]).toMatchObject({
         provider: "openai-codex",
-        model: "gpt-5.4",
+        model: "gpt-5.6-terra",
       });
       expect(vi.mocked(deps.complete).mock.calls[1]?.[0]).toMatchObject({
         provider: "anthropic",
@@ -1447,8 +1447,8 @@ describe("createLcmSummarizeFromLegacyParams", () => {
             if (modelRef === "anthropic/claude-opus-4-6") {
               return { provider: "anthropic", model: "claude-opus-4-6" };
             }
-            if (modelRef === "gpt-5.4") {
-              return { provider: providerHint ?? "openai-codex", model: "gpt-5.4" };
+            if (modelRef === "gpt-5.6-terra") {
+              return { provider: providerHint ?? "openai-codex", model: "gpt-5.6-terra" };
             }
             throw new Error(`unexpected modelRef: ${String(modelRef)}`);
           }),
@@ -1477,7 +1477,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
           deps,
           legacyParams: {
             provider: "openai-codex",
-            model: "gpt-5.4",
+            model: "gpt-5.6-terra",
             config: {
               agents: {
                 defaults: {
@@ -1485,7 +1485,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
                     model: "anthropic/claude-opus-4-6",
                   },
                   model: {
-                    primary: "openai-codex/gpt-5.4",
+                    primary: "openai-codex/gpt-5.6-terra",
                   },
                 },
               },
@@ -1508,11 +1508,11 @@ describe("createLcmSummarizeFromLegacyParams", () => {
       });
       expect(vi.mocked(deps.complete).mock.calls[2]?.[0]).toMatchObject({
         provider: "openai-codex",
-        model: "gpt-5.4",
+        model: "gpt-5.6-terra",
       });
 
       const diagnostics = getDepsLogText(deps);
-      expect(diagnostics).toContain("retrying with openai-codex/gpt-5.4");
+      expect(diagnostics).toContain("retrying with openai-codex/gpt-5.6-terra");
       expect(diagnostics).toContain("retry also returned empty summary");
       expect(diagnostics).not.toContain("falling back to truncation");
     });
@@ -1520,8 +1520,8 @@ describe("createLcmSummarizeFromLegacyParams", () => {
     it("falls back to the next provider instead of retrying with direct credentials", async () => {
       const deps = makeDeps({
           resolveModel: vi.fn((modelRef?: string, providerHint?: string) => {
-            if (modelRef === "gpt-5.4") {
-              return { provider: providerHint ?? "openai-codex", model: "gpt-5.4" };
+            if (modelRef === "gpt-5.6-terra") {
+              return { provider: providerHint ?? "openai-codex", model: "gpt-5.6-terra" };
             }
             if (modelRef === "anthropic/claude-sonnet-4-6") {
               return { provider: "anthropic", model: "claude-sonnet-4-6" };
@@ -1549,14 +1549,14 @@ describe("createLcmSummarizeFromLegacyParams", () => {
           deps,
           legacyParams: {
             provider: "openai-codex",
-            model: "gpt-5.4",
+            model: "gpt-5.6-terra",
             config: {
               plugins: {
                 entries: {
                   "lossless-claw": {
                     config: {
                       summaryProvider: "openai-codex",
-                      summaryModel: "gpt-5.4",
+                      summaryModel: "gpt-5.6-terra",
                     },
                   },
                 },
@@ -1576,7 +1576,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
       expect(vi.mocked(deps.complete)).toHaveBeenCalledTimes(2);
       expect(vi.mocked(deps.complete).mock.calls[0]?.[0]).toMatchObject({
         provider: "openai-codex",
-        model: "gpt-5.4",
+        model: "gpt-5.6-terra",
       });
       expect(vi.mocked(deps.complete).mock.calls[1]?.[0]).toMatchObject({
         provider: "anthropic",
@@ -1596,8 +1596,8 @@ describe("createLcmSummarizeFromLegacyParams", () => {
           fallbackProviders: [{ provider: "anthropic", model: "claude-sonnet-4-6" }],
         },
         resolveModel: vi.fn((modelRef?: string, providerHint?: string) => {
-          if (modelRef === "gpt-5.5") {
-            return { provider: providerHint ?? "openai-codex", model: "gpt-5.5" };
+          if (modelRef === "gpt-5.6-sol") {
+            return { provider: providerHint ?? "openai-codex", model: "gpt-5.6-sol" };
           }
           if (modelRef === "anthropic/claude-sonnet-4-6") {
             return { provider: "anthropic", model: "claude-sonnet-4-6" };
@@ -1609,7 +1609,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
           error: {
             kind: "runtime_llm_policy",
             configField: "summaryModel",
-            modelRef: "openai-codex/gpt-5.5",
+            modelRef: "openai-codex/gpt-5.6-sol",
             message:
               "[lcm] OpenClaw denied the Lossless runtime LLM model override from plugins.entries.lossless-claw.config.summaryModel. Configure plugins.entries.lossless-claw.llm.allowedModels.",
           },
@@ -1620,14 +1620,14 @@ describe("createLcmSummarizeFromLegacyParams", () => {
         deps,
         legacyParams: {
           provider: "openai-codex",
-          model: "gpt-5.5",
+          model: "gpt-5.6-sol",
           config: {
             plugins: {
               entries: {
                 "lossless-claw": {
                   config: {
                     summaryProvider: "openai-codex",
-                    summaryModel: "gpt-5.5",
+                    summaryModel: "gpt-5.6-sol",
                   },
                 },
               },
@@ -1644,7 +1644,7 @@ describe("createLcmSummarizeFromLegacyParams", () => {
         runtimeModelOverride: {
           configField: "summaryModel",
           configPath: "plugins.entries.lossless-claw.config.summaryModel",
-          modelRef: "openai-codex/gpt-5.5",
+          modelRef: "openai-codex/gpt-5.6-sol",
         },
       });
     });

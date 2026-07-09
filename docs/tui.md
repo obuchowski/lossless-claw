@@ -282,7 +282,7 @@ lcm-tui doctor --all
 | `--summary` | Scan only and show counts |
 | `--all` | Scan all conversations (discovery mode only) |
 | `--provider <id>` | API provider (default: `openai-codex`) |
-| `--model <model>` | API model (default: `gpt-5.4`) |
+| `--model <model>` | API model (default: `gpt-5.6-terra`) |
 | `--base-url <url>` | Custom API base URL (overrides config and env) |
 | `--show-diff` | Show unified diff for each fix |
 | `--timestamps` | Inject timestamps into rewrite source text |
@@ -310,7 +310,7 @@ lcm-tui repair 44 --summary-id sum_abc123 --apply
 lcm-tui repair 44 --apply
 
 # Repair through a custom OpenAI-compatible proxy with a raw API key
-lcm-tui repair 44 --apply --provider openai --model gpt-5.4 --base-url https://proxy.example.com/openai
+lcm-tui repair 44 --apply --provider openai --model gpt-5.6-terra --base-url https://proxy.example.com/openai
 ```
 
 The repair process:
@@ -349,7 +349,7 @@ lcm-tui rewrite 44 --all --apply --diff
 lcm-tui rewrite 44 --summary sum_abc123 --apply
 
 # Rewrite through a custom OpenAI-compatible proxy with a raw API key
-lcm-tui rewrite 44 --summary sum_abc123 --provider openai --model gpt-5.4 --base-url https://proxy.example.com/openai --apply
+lcm-tui rewrite 44 --summary sum_abc123 --provider openai --model gpt-5.6-terra --base-url https://proxy.example.com/openai --apply
 
 # Use custom prompt templates
 lcm-tui rewrite 44 --all --apply --prompt-dir ~/.config/lcm-tui/prompts
@@ -445,7 +445,7 @@ lcm-tui backfill my-agent session_abc123 --apply --transplant-to 653
 lcm-tui backfill my-agent session_abc123 --apply
 
 # Backfill through a custom OpenAI-compatible proxy with a raw API key
-lcm-tui backfill my-agent session_abc123 --apply --provider openai --model gpt-5.4 --base-url https://proxy.example.com/openai
+lcm-tui backfill my-agent session_abc123 --apply --provider openai --model gpt-5.6-terra --base-url https://proxy.example.com/openai
 ```
 
 All write paths are transactional:
