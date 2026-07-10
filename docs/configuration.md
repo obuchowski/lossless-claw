@@ -30,6 +30,7 @@ Most installations only need to override a handful of keys. If you want a comple
   "statelessSessionPatterns": [],
   "skipStatelessSessions": true,
   "contextThreshold": 0.75,
+  "sweepTargetThreshold": 0.15,
   "contextThresholdOverrides": [
     {
       "name": "large-context-models",
@@ -135,6 +136,7 @@ Notes on the example:
 - `largeFilesDir` shows the expanded default path shape. Both `databasePath` and `largeFilesDir` default to paths under `OPENCLAW_STATE_DIR` (which in turn falls back to `~/.openclaw`).
 - `timezone` has no fixed hardcoded default; at runtime it resolves from `TZ` first, then the system timezone. The example uses `America/Los_Angeles`.
 - `maxAssemblyTokenBudget` has no default. The example uses `30000` as a realistic cap for a 32k-class model.
+- `sweepTargetThreshold` has no default. When set, automatic threshold sweeps aim best-effort at that fraction of the model context window; the effective value is clamped at `contextThreshold`. Protected fresh-tail content and noncompactable host/runtime overhead can prevent reaching it.
 - `summaryPrefixTargetTokens` has no fixed default. The example uses `20000`, which matches the derived default for large-context models with the default `leafChunkTokens`.
 - `databasePath` is the preferred key. `dbPath` is an accepted alias.
 - `largeFileThresholdTokens` is the preferred key. `largeFileTokenThreshold` is an accepted alias.
@@ -206,6 +208,7 @@ Every automatic decision emits grep-able log lines prefixed with `[lcm] auto-rot
 | Key | Type | Default | Env override | Purpose |
 | --- | --- | --- | --- | --- |
 | `contextThreshold` | `number` | `0.75` | `LCM_CONTEXT_THRESHOLD` | Fraction of the active model context window that triggers compaction. |
+| `sweepTargetThreshold` | `number` | unset | `LCM_SWEEP_TARGET_THRESHOLD` | Optional best-effort total-context target for automatic threshold sweeps. Clamped at `contextThreshold`; protected fresh-tail content and noncompactable runtime overhead can prevent reaching it. |
 | `contextThresholdOverrides` | `Array<{ name?: string; match: object; contextThreshold: number; freshTailCount?: integer; leafChunkTokens?: integer }>` | `[]` | none | Optional ordered rules that override `contextThreshold` and, optionally, `freshTailCount` and `leafChunkTokens` by model id, model context-window range, or session glob pattern. |
 | `freshTailCount` | `integer` | `64` | `LCM_FRESH_TAIL_COUNT` | Number of newest messages always kept raw. |
 | `freshTailMaxTokens` | `integer` | unset | `LCM_FRESH_TAIL_MAX_TOKENS` | Optional token cap for the protected fresh tail. The newest message is always preserved even if it exceeds the cap. |
@@ -305,7 +308,7 @@ Lossless still records prompt-cache telemetry for status and diagnostics, but ca
 
 Context-window matchers only apply when the OpenClaw host reports explicit model context-window metadata to Lossless. Lossless does not infer `modelContextWindowMin` or `modelContextWindowMax` matches from the active token budget. If an override must affect assemble-time `freshTailCount` on all currently supported OpenClaw hosts, prefer an exact `model` or `sessionPattern` matcher.
 
-Full sweeps first run leaf passes until there are no more eligible raw-message chunks outside the fresh tail. Condensation is then driven by summarized-prefix pressure: the routine condensation phase obeys `sweepMaxDepth`, and if the summarized prefix still exceeds `summaryPrefixTargetTokens`, a pressure phase may use `condensedMinFanoutHard` and condense deeper. Total context pressure starts the sweep, but does not by itself force deeper condensation once the raw prefix has been summarized.
+Full sweeps first run leaf passes until there are no more eligible raw-message chunks outside the fresh tail. Condensation is then driven by summarized-prefix pressure. When `sweepTargetThreshold` is configured for an automatic threshold sweep, total stored-context pressure also keeps condensation active toward that best-effort target. The routine condensation phase obeys `sweepMaxDepth`; pressure may use `condensedMinFanoutHard` and go deeper. The target is not a guarantee because protected fresh-tail content and host/runtime overhead are not necessarily compactable.
 
 A single sweep is bounded by both `maxSweepIterations` (a hard cap on summarizer passes) and `sweepDeadlineMs` (a wall-clock budget). When either limit is reached the sweep stops before starting another pass and returns the consistent partial result built so far, logging a `compactFullSweep stopped at …` warning. This keeps a slow or rate-limited summarizer from hanging the agent turn — remaining context pressure is picked up by the next sweep.
 

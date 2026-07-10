@@ -102,9 +102,9 @@ Relevant code:
 The sweep has two phases:
 
 1. Leaf phase: repeatedly summarize the oldest raw chunks outside the fresh tail.
-2. Condensed phase: if summarized-prefix tokens exceed `summaryPrefixTargetTokens`, repeatedly summarize same-depth summary chunks, shallowest first.
+2. Condensed phase: if summarized-prefix tokens exceed `summaryPrefixTargetTokens`, or an automatic threshold sweep remains above configured `sweepTargetThreshold`, repeatedly summarize same-depth summary chunks, shallowest first.
 
-Routine threshold sweeps use `contextThreshold` to decide when to start compaction. Once started, the leaf phase runs until no eligible raw-message chunk remains outside the fresh tail. Condensation is controlled by `summaryPrefixTargetTokens`, not by total context pressure. Forced sweeps still stop when no eligible chunk remains or when a pass stops making token progress.
+Routine threshold sweeps use `contextThreshold` to decide when to start compaction. Once started, the leaf phase runs until no eligible raw-message chunk remains outside the fresh tail. Condensation is controlled by `summaryPrefixTargetTokens` plus optional best-effort total-context pressure from `sweepTargetThreshold`. Without `sweepTargetThreshold`, legacy summarized-prefix behavior is unchanged. Forced sweeps still stop when no eligible chunk remains or when a pass stops making token progress.
 
 `sweepMaxDepth` is the preferred source-depth cap for routine full-sweep condensation:
 
@@ -163,6 +163,7 @@ That policy is removed from automatic scheduling. The important reason is not th
 | Key | Role |
 | --- | --- |
 | `contextThreshold` | The only automatic compaction trigger. |
+| `sweepTargetThreshold` | Optional best-effort total-context target after an automatic threshold sweep starts; unset preserves legacy behavior. |
 | `proactiveThresholdCompactionMode` | Chooses inline vs deferred threshold full sweep. |
 | `freshTailCount` | Protects newest raw messages during assembly and compaction. |
 | `freshTailMaxTokens` | Optional cap for protected fresh-tail size. |
@@ -238,6 +239,6 @@ Removed or rewritten coverage:
 
 ## Follow-Up Watch Items
 
-1. If repeated threshold re-entry happens in live use, tune `summaryPrefixTargetTokens`, `contextThreshold`, `leafChunkTokens`, and fanout before adding a total-context target floor.
+1. If repeated threshold re-entry happens in live use, tune `sweepTargetThreshold`, `summaryPrefixTargetTokens`, `contextThreshold`, `leafChunkTokens`, and fanout. Remember that protected fresh-tail content and runtime overhead make the sweep target best-effort rather than a hard total-context floor.
 2. If 20k leaf chunks make threshold sweeps too frequent, consider 30k before adding new mechanisms.
 3. If stable orphan stripping removal causes measurable cache regressions in tool-heavy sessions, revisit it as an assembly feature independent of cache-hotness inference.

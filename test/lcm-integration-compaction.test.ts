@@ -998,6 +998,56 @@ describe("LCM integration: compaction", () => {
     ).toBe(false);
   });
 
+  it("compactFullSweep uses targetRatio as best-effort total-context pressure", async () => {
+    const pressureEngine = new CompactionEngine(convStore as any, sumStore as any, {
+      ...defaultCompactionConfig,
+      contextThreshold: 0.85,
+      freshTailCount: 2,
+      condensedMinFanout: 4,
+      condensedMinFanoutHard: 2,
+      leafChunkTokens: 500,
+      condensedTargetTokens: 10,
+      sweepMaxDepth: 1,
+      summaryPrefixTargetTokens: 10_000,
+    });
+
+    await convStore.createConversation({ sessionId: "sweep-target-pressure-depth" });
+    for (const suffix of ["a", "b"]) {
+      const summaryId = `sum_sweep_target_depth_one_${suffix}`;
+      await sumStore.insertSummary({
+        summaryId,
+        conversationId: CONV_ID,
+        kind: "condensed",
+        depth: 1,
+        content: `Depth one sweep target summary ${suffix}`,
+        tokenCount: 80,
+      });
+      await sumStore.appendContextSummary(CONV_ID, summaryId);
+    }
+    await ingestMessages(convStore, sumStore, 2, {
+      contentFn: (i) => `Protected fresh tail ${i}`,
+      tokenCountFn: () => 1_000,
+    });
+
+    const summarize = vi.fn(async () => "Depth two sweep target summary");
+    const result = await pressureEngine.compactFullSweep({
+      conversationId: CONV_ID,
+      tokenBudget: 2_000,
+      contextThreshold: 0.85,
+      targetRatio: 0.15,
+      summarize,
+    });
+
+    expect(result.actionTaken).toBe(true);
+    expect(result.condensed).toBe(true);
+    expect(result.tokensAfter).toBeGreaterThan(300);
+    expect(summarize).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(Boolean),
+      expect.objectContaining({ isCondensed: true, depth: 2 }),
+    );
+  });
+
   it("compactFullSweep uses stopAtTokens to pressure-condense live-runtime overages", async () => {
     const pressureEngine = new CompactionEngine(convStore as any, sumStore as any, {
       ...defaultCompactionConfig,

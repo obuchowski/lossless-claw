@@ -1144,8 +1144,22 @@ export class LcmContextEngine implements ContextEngine {
         ? { freshTailCount: resolvedContextThreshold.freshTailCount }
         : {}),
     });
+    const configuredSweepTargetThreshold = this.config.sweepTargetThreshold;
+    const sweepTargetThreshold =
+      params.compactionTarget === "threshold" &&
+      typeof configuredSweepTargetThreshold === "number" &&
+      Number.isFinite(configuredSweepTargetThreshold)
+        ? Math.min(
+            Math.max(0, configuredSweepTargetThreshold),
+            resolvedContextThreshold.contextThreshold,
+          )
+        : undefined;
     const targetTokens =
-      params.compactionTarget === "threshold" ? decision.threshold : tokenBudget;
+      params.compactionTarget === "threshold"
+        ? sweepTargetThreshold !== undefined
+          ? Math.floor(sweepTargetThreshold * tokenBudget)
+          : decision.threshold
+        : tokenBudget;
     // Codex can report a live prompt count that includes runtime framing,
     // tool schemas, and other overhead not present in Lossless's compactable
     // stored count. Raw backlog is different: it can force a sweep, but once
@@ -1268,6 +1282,9 @@ export class LcmContextEngine implements ContextEngine {
           summarize,
           force: forceThresholdSweep,
           hardTrigger: false,
+          ...(sweepTargetThreshold !== undefined
+            ? { targetRatio: sweepTargetThreshold }
+            : {}),
           summaryModel,
           ...(runtimeAdjustedSweepTargetTokens !== undefined
             ? { stopAtTokens: runtimeAdjustedSweepTargetTokens }

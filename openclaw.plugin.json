@@ -35,6 +35,10 @@
       "label": "Context Threshold",
       "help": "Fraction of context window that triggers compaction (0.0–1.0)"
     },
+    "sweepTargetThreshold": {
+      "label": "Sweep Target Threshold",
+      "help": "Optional best-effort total-context target for automatic threshold sweeps (0.0–1.0). Clamped at contextThreshold; protected fresh tail and runtime overhead can prevent reaching it."
+    },
     "contextThresholdOverrides": {
       "label": "Context Threshold Overrides",
       "help": "Optional ordered rules that override contextThreshold, freshTailCount, and leafChunkTokens by model, model context-window range, or session glob pattern"
@@ -332,6 +336,11 @@
         "type": "boolean"
       },
       "contextThreshold": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "sweepTargetThreshold": {
         "type": "number",
         "minimum": 0,
         "maximum": 1

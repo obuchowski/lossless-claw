@@ -167,6 +167,7 @@ Add a `lossless-claw` entry under `plugins.entries` in your OpenClaw config:
           "leafChunkTokens": 80000,
           "newSessionRetainDepth": 2,
           "contextThreshold": 0.75,
+          "sweepTargetThreshold": 0.15,
           "contextThresholdOverrides": [
             {
               "name": "large-context-models",
@@ -215,6 +216,7 @@ Add a `lossless-claw` entry under `plugins.entries` in your OpenClaw config:
 | `LCM_STATELESS_SESSION_PATTERNS` | `""` | Comma-separated glob patterns for session keys that may read from LCM but never write to it |
 | `LCM_SKIP_STATELESS_SESSIONS` | `true` | Enable stateless-session write skipping for matching session keys |
 | `LCM_CONTEXT_THRESHOLD` | `0.75` | Fraction of context window that triggers compaction (0.0–1.0) |
+| `LCM_SWEEP_TARGET_THRESHOLD` | unset | Optional best-effort total-context target for automatic threshold sweeps (0.0–1.0); clamped at the trigger threshold |
 | `LCM_FRESH_TAIL_COUNT` | `64` | Number of recent messages protected from compaction |
 | `LCM_NEW_SESSION_RETAIN_DEPTH` | `2` | Context retained after `/new` (`-1` keeps all context, `2` keeps d2+) |
 | `LCM_LEAF_MIN_FANOUT` | `8` | Minimum raw messages per leaf summary |
@@ -316,6 +318,8 @@ LCM_FRESH_TAIL_COUNT=64
 LCM_LEAF_CHUNK_TOKENS=20000
 LCM_INCREMENTAL_MAX_DEPTH=1
 LCM_CONTEXT_THRESHOLD=0.75
+# Optional: aim automatic sweeps deeper after the trigger fires
+# LCM_SWEEP_TARGET_THRESHOLD=0.15
 LCM_SUMMARY_MODEL=openai/gpt-5.6-luna
 LCM_EXPANSION_MODEL=openai/gpt-5.6-luna
 ```
@@ -324,6 +328,7 @@ LCM_EXPANSION_MODEL=openai/gpt-5.6-luna
 - **leafChunkTokens=20000** limits how large each leaf compaction chunk can grow before LCM summarizes it. Increase this when your summary provider is quota-limited and frequent leaf compactions are exhausting that quota.
 - **incrementalMaxDepth=1** runs one condensed pass after each leaf compaction by default. Set to `0` for leaf-only behavior, a larger positive integer for a deeper cap, or `-1` for unlimited cascading.
 - **contextThreshold=0.75** triggers compaction when context reaches 75% of the model's window, leaving headroom for the model's response.
+- **sweepTargetThreshold** optionally makes automatic threshold sweeps continue condensing toward a lower fraction of the window. It is best-effort: protected fresh-tail content and noncompactable runtime overhead can keep the final total above the target.
 - **contextThresholdOverrides** optionally picks a different threshold for matching model ids, model context-window ranges, or session patterns. If no rule matches, LCM falls back to `contextThreshold`.
 
 ### Session exclusion patterns

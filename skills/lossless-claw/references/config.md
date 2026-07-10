@@ -30,6 +30,10 @@ Good default:
 
 - `0.75`
 
+### `sweepTargetThreshold`
+
+Optionally sets a deeper best-effort target after an automatic `contextThreshold` sweep starts. For example, `contextThreshold: 0.85` with `sweepTargetThreshold: 0.15` waits until 85% usage, then condenses compactable stored context toward 15%. The effective target is clamped at the trigger threshold. Protected fresh-tail content and host/runtime overhead may keep total context above the target, so this is not a hard floor guarantee.
+
 ### `contextThresholdOverrides`
 
 Optional ordered rules that choose a different compaction threshold, and optionally a different fresh-tail count or leaf chunk size, for matching runtime contexts.

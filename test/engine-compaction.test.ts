@@ -2992,6 +2992,105 @@ describe("LcmContextEngine.compact token budget plumbing", () => {
     expect(compactUntilUnderSpy).not.toHaveBeenCalled();
   });
 
+  it("uses sweepTargetThreshold only for automatic threshold sweeps", async () => {
+    const engine = createEngineWithConfig({
+      contextThreshold: 0.85,
+      sweepTargetThreshold: 0.15,
+    });
+    const privateEngine = engine as unknown as {
+      compaction: {
+        evaluate: (conversationId: number, tokenBudget: number) => Promise<unknown>;
+        compactFullSweep: (input: unknown) => Promise<unknown>;
+      };
+    };
+
+    vi.spyOn(privateEngine.compaction, "evaluate").mockResolvedValue({
+      shouldCompact: true,
+      reason: "threshold",
+      currentTokens: 360,
+      threshold: 340,
+    });
+    const compactFullSweepSpy = vi
+      .spyOn(privateEngine.compaction, "compactFullSweep")
+      .mockResolvedValue({
+        actionTaken: true,
+        tokensBefore: 360,
+        tokensAfter: 50,
+        condensed: true,
+      });
+
+    await engine.ingest({
+      sessionId: "sweep-target-threshold-session",
+      message: { role: "user", content: "trigger" } as AgentMessage,
+    });
+
+    const result = await engine.compact({
+      sessionId: "sweep-target-threshold-session",
+      sessionFile: "/tmp/session.jsonl",
+      tokenBudget: 400,
+      compactionTarget: "threshold",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.result?.details).toEqual(
+      expect.objectContaining({ targetTokens: 60 }),
+    );
+    expect(compactFullSweepSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contextThreshold: 0.85,
+        targetRatio: 0.15,
+      }),
+    );
+  });
+
+  it("clamps sweepTargetThreshold at the active contextThreshold", async () => {
+    const engine = createEngineWithConfig({
+      contextThreshold: 0.75,
+      sweepTargetThreshold: 0.9,
+    });
+    const privateEngine = engine as unknown as {
+      compaction: {
+        evaluate: (conversationId: number, tokenBudget: number) => Promise<unknown>;
+        compactFullSweep: (input: unknown) => Promise<unknown>;
+      };
+    };
+
+    vi.spyOn(privateEngine.compaction, "evaluate").mockResolvedValue({
+      shouldCompact: true,
+      reason: "threshold",
+      currentTokens: 380,
+      threshold: 300,
+    });
+    const compactFullSweepSpy = vi
+      .spyOn(privateEngine.compaction, "compactFullSweep")
+      .mockResolvedValue({
+        actionTaken: true,
+        tokensBefore: 380,
+        tokensAfter: 280,
+        condensed: false,
+      });
+
+    await engine.ingest({
+      sessionId: "sweep-target-clamp-session",
+      message: { role: "user", content: "trigger" } as AgentMessage,
+    });
+
+    const result = await engine.compact({
+      sessionId: "sweep-target-clamp-session",
+      sessionFile: "/tmp/session.jsonl",
+      tokenBudget: 400,
+      compactionTarget: "threshold",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.result?.details).toEqual(
+      expect.objectContaining({ targetTokens: 300 }),
+    );
+    expect(compactFullSweepSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ targetRatio: 0.75 }),
+    );
+  });
+
   it("passes currentTokenCount through to compaction evaluation and loop", async () => {
     const engine = createEngine();
     const privateEngine = engine as unknown as {

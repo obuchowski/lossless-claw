@@ -773,6 +773,8 @@ export class CompactionEngine {
     conversationId: number;
     tokenBudget: number;
     contextThreshold?: number;
+    /** Optional best-effort total-context target ratio for this sweep. */
+    targetRatio?: number;
     /** Optional per-call override for freshTailCount. */
     freshTailCount?: number;
     /** LLM call function for summarization */
@@ -947,6 +949,8 @@ export class CompactionEngine {
     conversationId: number;
     tokenBudget: number;
     contextThreshold?: number;
+    /** Optional best-effort total-context target ratio for this sweep. */
+    targetRatio?: number;
     /** Optional per-call override for freshTailCount. */
     freshTailCount?: number;
     /** Optional per-call override for leafChunkTokens. */
@@ -973,12 +977,22 @@ export class CompactionEngine {
     const tokensBefore = await this.summaryStore.getContextTokenCount(conversationId);
     const contextThreshold = resolveContextThreshold(this.config, input.contextThreshold);
     const threshold = Math.floor(contextThreshold * tokenBudget);
-    const stopAtTokens =
+    const explicitStopAtTokens =
       typeof input.stopAtTokens === "number" &&
       Number.isFinite(input.stopAtTokens) &&
       input.stopAtTokens > 0
         ? Math.floor(input.stopAtTokens)
         : undefined;
+    const targetRatio =
+      typeof input.targetRatio === "number" &&
+      Number.isFinite(input.targetRatio) &&
+      input.targetRatio >= 0 &&
+      input.targetRatio <= 1
+        ? Math.min(input.targetRatio, contextThreshold)
+        : undefined;
+    const stopAtTokens =
+      explicitStopAtTokens ??
+      (targetRatio !== undefined ? Math.floor(targetRatio * tokenBudget) : undefined);
 
     if (
       !force &&

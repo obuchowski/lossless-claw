@@ -100,6 +100,8 @@ export type LcmConfig = {
   /** When true, stateless session pattern matching is enforced. */
   skipStatelessSessions: boolean;
   contextThreshold: number;
+  /** Optional best-effort total-context target for automatic threshold sweeps. */
+  sweepTargetThreshold?: number;
   /** Optional ordered rules that override contextThreshold for matching runtime contexts. */
   contextThresholdOverrides?: ContextThresholdOverride[];
   freshTailCount: number;
@@ -406,6 +408,17 @@ function parseContextThresholdOverrideThreshold(value: unknown, path: string): n
   return threshold;
 }
 
+function parseOptionalRatio(value: unknown, path: string): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  const ratio = toNumber(value);
+  if (ratio === undefined || ratio < 0 || ratio > 1) {
+    throw new Error(`${path} must be a finite number between 0 and 1`);
+  }
+  return ratio;
+}
+
 function parsePositiveIntegerMatcher(value: unknown, path: string): number | undefined {
   if (value === undefined) {
     return undefined;
@@ -577,6 +590,19 @@ export function resolveLcmConfigWithDiagnostics(
   const resolvedLeafChunkTokens =
     parseFiniteInt(env.LCM_LEAF_CHUNK_TOKENS)
       ?? toNumber(pc.leafChunkTokens) ?? 20000;
+  const pluginSweepTargetThreshold = parseOptionalRatio(
+    pc.sweepTargetThreshold,
+    "sweepTargetThreshold",
+  );
+  const envSweepTargetThreshold =
+    env.LCM_SWEEP_TARGET_THRESHOLD === undefined
+      ? undefined
+      : parseOptionalRatio(
+          env.LCM_SWEEP_TARGET_THRESHOLD,
+          "LCM_SWEEP_TARGET_THRESHOLD",
+        );
+  const resolvedSweepTargetThreshold =
+    envSweepTargetThreshold ?? pluginSweepTargetThreshold;
   const resolvedBootstrapMaxTokens =
     parseFiniteInt(env.LCM_BOOTSTRAP_MAX_TOKENS)
       ?? toNumber(pc.bootstrapMaxTokens)
@@ -700,6 +726,7 @@ export function resolveLcmConfigWithDiagnostics(
       contextThreshold:
         parseFiniteNumber(env.LCM_CONTEXT_THRESHOLD)
           ?? toNumber(pc.contextThreshold) ?? 0.75,
+      sweepTargetThreshold: resolvedSweepTargetThreshold,
       contextThresholdOverrides: toContextThresholdOverrides(pc.contextThresholdOverrides),
       freshTailCount:
         parseFiniteInt(env.LCM_FRESH_TAIL_COUNT)

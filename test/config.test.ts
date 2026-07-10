@@ -31,6 +31,7 @@ describe("resolveLcmConfig", () => {
     expect(config.statelessSessionPatterns).toEqual([]);
     expect(config.skipStatelessSessions).toBe(true);
     expect(config.contextThreshold).toBe(0.75);
+    expect(config.sweepTargetThreshold).toBeUndefined();
     expect(config.contextThresholdOverrides).toEqual([]);
     expect(config.freshTailCount).toBe(64);
     expect(config.freshTailMaxTokens).toBeUndefined();
@@ -80,6 +81,7 @@ describe("resolveLcmConfig", () => {
   it("reads values from plugin config", () => {
     const config = resolveLcmConfig({}, {
       contextThreshold: 0.5,
+      sweepTargetThreshold: 0.2,
       contextThresholdOverrides: [
         {
           name: "large-context",
@@ -144,6 +146,7 @@ describe("resolveLcmConfig", () => {
     expect(config.statelessSessionPatterns).toEqual(["agent:*:ephemeral:**"]);
     expect(config.skipStatelessSessions).toBe(false);
     expect(config.contextThreshold).toBe(0.5);
+    expect(config.sweepTargetThreshold).toBe(0.2);
     expect(config.contextThresholdOverrides).toEqual([
       {
         name: "large-context",
@@ -201,6 +204,7 @@ describe("resolveLcmConfig", () => {
   it("env vars override plugin config", () => {
     const env = {
       LCM_CONTEXT_THRESHOLD: "0.9",
+      LCM_SWEEP_TARGET_THRESHOLD: "0.15",
       LCM_FRESH_TAIL_COUNT: "64",
       LCM_FRESH_TAIL_MAX_TOKENS: "32000",
       LCM_PROMPT_AWARE_EVICTION_ENABLED: "false",
@@ -236,6 +240,7 @@ describe("resolveLcmConfig", () => {
     } as NodeJS.ProcessEnv;
     const pluginConfig = {
       contextThreshold: 0.5,
+      sweepTargetThreshold: 0.25,
       freshTailCount: 16,
       freshTailMaxTokens: 12000,
       promptAwareEviction: true,
@@ -295,6 +300,7 @@ describe("resolveLcmConfig", () => {
       runtime: "off",
     });
     expect(config.contextThreshold).toBe(0.9); // env wins
+    expect(config.sweepTargetThreshold).toBe(0.15); // env wins
     expect(config.freshTailCount).toBe(64); // env wins
     expect(config.freshTailMaxTokens).toBe(32000); // env wins
     expect(config.promptAwareEviction).toBe(false); // env wins
@@ -701,6 +707,11 @@ describe("resolveLcmConfig", () => {
   });
 
   it("ships a manifest that accepts sweep depth and deprecated incremental depth", () => {
+    expect(manifest.configSchema.properties.sweepTargetThreshold).toEqual({
+      type: "number",
+      minimum: 0,
+      maximum: 1,
+    });
     expect(manifest.configSchema.properties.sweepMaxDepth).toEqual({
       type: "integer",
       minimum: -1,
@@ -762,6 +773,30 @@ describe("resolveLcmConfig", () => {
         },
       },
     });
+  });
+
+  it("rejects invalid sweepTargetThreshold plugin values", () => {
+    expect(() => resolveLcmConfig({}, { sweepTargetThreshold: -0.01 })).toThrow(
+      /sweepTargetThreshold/,
+    );
+    expect(() => resolveLcmConfig({}, { sweepTargetThreshold: 1.01 })).toThrow(
+      /sweepTargetThreshold/,
+    );
+    expect(() => resolveLcmConfig({}, { sweepTargetThreshold: "invalid" })).toThrow(
+      /sweepTargetThreshold/,
+    );
+  });
+
+  it("rejects invalid LCM_SWEEP_TARGET_THRESHOLD env values", () => {
+    expect(() =>
+      resolveLcmConfig({ LCM_SWEEP_TARGET_THRESHOLD: "-0.01" } as NodeJS.ProcessEnv, {}),
+    ).toThrow(/LCM_SWEEP_TARGET_THRESHOLD/);
+    expect(() =>
+      resolveLcmConfig({ LCM_SWEEP_TARGET_THRESHOLD: "1.01" } as NodeJS.ProcessEnv, {}),
+    ).toThrow(/LCM_SWEEP_TARGET_THRESHOLD/);
+    expect(() =>
+      resolveLcmConfig({ LCM_SWEEP_TARGET_THRESHOLD: "invalid" } as NodeJS.ProcessEnv, {}),
+    ).toThrow(/LCM_SWEEP_TARGET_THRESHOLD/);
   });
 
   it("rejects invalid contextThresholdOverrides", () => {
